@@ -75,7 +75,7 @@ Transcribes an uploaded audio or video file.
   - `file`: Audio or video file (required)
   - `service`: Transcription service (`openai-whisper` or `whisper-cpp`)
   - `language`: Language code (optional)
-  - `translateToEnglish`: Boolean string (`true`/`false`)
+  - `translateToEnglish`: Boolean string (`true`/`false`)  // Not available when OpenAI Whisper is used
 
 **Response:**
 ```json
