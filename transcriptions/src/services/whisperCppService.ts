@@ -5,6 +5,8 @@ import {
   installWhisperCpp,
   transcribe,
   convertToCaptions,
+  WhisperModel,
+  Language,
 } from '@remotion/install-whisper-cpp';
 import { TranscriptionResult, WhisperCppOptions } from '../types';
 import config from '../config';
@@ -53,7 +55,7 @@ export class WhisperCppService {
       if (!modelExists) {
         logger.info(`Downloading model: ${config.transcription.whisperModel}`);
         await downloadWhisperModel({
-          model: config.transcription.whisperModel,
+          model: config.transcription.whisperModel as WhisperModel,
           folder: this.whisperPath,
         });
         logger.info(`Model ${config.transcription.whisperModel} downloaded successfully`);
@@ -84,12 +86,12 @@ export class WhisperCppService {
       logger.info('Starting Whisper.cpp transcription', { audioPath, options });
 
       const { transcription } = await transcribe({
-        model: options.model || config.transcription.whisperModel,
+        model: (options.model || config.transcription.whisperModel) as WhisperModel,
         whisperPath: this.whisperPath,
         whisperCppVersion: config.transcription.whisperCppVersion,
         inputPath: audioPath,
         tokenLevelTimestamps: options.tokenLevelTimestamps ?? true,
-        language: options.language,
+        language: options.language as Language | null | undefined,
         translateToEnglish: options.translateToEnglish,
       });
 
@@ -105,14 +107,14 @@ export class WhisperCppService {
       
       // Calculate total duration from transcription
       const duration = transcription.length > 0 
-        ? Math.max(...transcription.map(t => t.timestamps.to)) / 1000 
+        ? Math.max(...transcription.map(t => Number(t.timestamps.to))) / 1000 
         : 0;
 
       const result: TranscriptionResult = {
         captions: captions.map(caption => ({
           text: caption.text,
-          startInSeconds: caption.startInSeconds,
-          endInSeconds: caption.endInSeconds,
+          startInSeconds: (caption as any).startInSeconds || (caption as any).start || (caption as any).from / 1000 || 0,
+          endInSeconds: (caption as any).endInSeconds || (caption as any).end || (caption as any).to / 1000 || 0,
         })),
         duration,
         language: options.language,

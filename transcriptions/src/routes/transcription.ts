@@ -16,7 +16,7 @@ const transcriptionService = new TranscriptionService();
 router.post(
   "/transcribe",
   upload.single("file"),
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response): Promise<void> => {
     const startTime = Date.now();
     let uploadedFile: Express.Multer.File | undefined;
 
@@ -24,10 +24,11 @@ router.post(
       uploadedFile = req.file;
 
       if (!uploadedFile) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: "No file uploaded",
         } as TranscriptionResponse);
+        return;
       }
 
       // Parse request body
@@ -40,10 +41,11 @@ router.post(
       // Validate service
       const availableServices = transcriptionService.getAvailableServices();
       if (!availableServices.includes(requestBody.service)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: `Service '${requestBody.service}' is not available. Available services: ${availableServices.join(", ")}`,
         } as TranscriptionResponse);
+        return;
       }
 
       logger.info("Transcription request received", {
@@ -56,10 +58,11 @@ router.post(
       // Validate file
       const validation = await FileValidator.validateFile(uploadedFile);
       if (!validation.isValid) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: validation.error,
         } as TranscriptionResponse);
+        return;
       }
 
       // Perform transcription

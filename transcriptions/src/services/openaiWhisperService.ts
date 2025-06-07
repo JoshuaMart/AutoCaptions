@@ -50,9 +50,9 @@ export class OpenAIWhisperService {
       const result: TranscriptionResult = {
         captions: captions.map((caption) => ({
           text: caption.text,
-          startInSeconds: caption.startInSeconds,
-          endInSeconds: caption.endInSeconds,
-          confidence: caption.confidence,
+          startInSeconds: caption.startMs / 1000,
+          endInSeconds: caption.endMs / 1000,
+          confidence: caption.confidence ?? undefined,
         })),
         duration: transcription.duration,
         language: transcription.language,

@@ -6,7 +6,7 @@ export const errorHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): void => {
   logger.error('Request error:', {
     error: error.message,
     stack: error.stack,
@@ -17,33 +17,37 @@ export const errorHandler = (
 
   // Handle multer errors
   if (error.message.includes('File too large')) {
-    return res.status(413).json({
+    res.status(413).json({
       success: false,
       error: 'File size exceeds maximum allowed size',
     });
+    return;
   }
 
   if (error.message.includes('File type') && error.message.includes('not allowed')) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: error.message,
     });
+    return;
   }
 
   // Handle validation errors
   if (error.message.includes('validation')) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: error.message,
     });
+    return;
   }
 
   // Handle transcription service errors
   if (error.message.includes('transcription failed') || error.message.includes('not available')) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message,
     });
+    return;
   }
 
   // Default error response

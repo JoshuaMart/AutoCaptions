@@ -60,6 +60,9 @@ export class TranscriptionService {
           language: request.language,
         });
       } else if (request.service === "whisper-cpp") {
+        if (!this.whisperCppService) {
+          throw new Error("Whisper.cpp service not available.");
+        }
         transcriptionResult = await this.whisperCppService.transcribe(
           audioPath,
           {

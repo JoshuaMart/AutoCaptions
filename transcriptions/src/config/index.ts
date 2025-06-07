@@ -3,6 +3,8 @@ import path from "path";
 
 dotenv.config();
 
+type WhisperModel = "medium" | "tiny" | "tiny.en" | "base" | "base.en" | "small" | "small.en" | "medium.en" | "large-v1" | "large-v2" | "large-v3" | "large-v3-turbo";
+
 interface Config {
   server: {
     port: number;
@@ -11,7 +13,7 @@ interface Config {
   transcription: {
     service: "openai-whisper" | "whisper-cpp";
     whisperCppVersion: string;
-    whisperModel: string;
+    whisperModel: WhisperModel;
   };
   openai: {
     apiKey?: string;
@@ -38,7 +40,7 @@ const config: Config = {
       (process.env.TRANSCRIPTION_SERVICE as "openai-whisper" | "whisper-cpp") ||
       "whisper-cpp",
     whisperCppVersion: process.env.WHISPER_CPP_VERSION || "1.7.5",
-    whisperModel: process.env.WHISPER_MODEL || "medium",
+    whisperModel: (process.env.WHISPER_MODEL as WhisperModel) || "medium",
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
