@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+*.log
+logs/
+uploads/
+temp/
+whisper.cpp/
+.DS_Store
+*.tmp
+*.temp
+examples/
+package-lock.json

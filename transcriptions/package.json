@@ -1,0 +1,44 @@
+{
+  "name": "transcription-service",
+  "version": "1.0.0",
+  "description": "REST API for audio/video transcription using OpenAI Whisper or Whisper.cpp",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "transcription",
+    "whisper",
+    "api",
+    "captions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@remotion/install-whisper-cpp": "4.0.314",
+    "@remotion/openai-whisper": "4.0.314",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "multer": "2.0.1",
+    "openai": "^5.1.1",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^22.15.30",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
