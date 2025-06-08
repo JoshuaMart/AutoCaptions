@@ -2,6 +2,10 @@
 
 TypeScript REST API for generating video captions using FFmpeg and ASS subtitles.
 
+| Before | After |
+|--|--|
+| ![img](https://i.ibb.co/6cStFTyR/before.png) | ![img](https://i.ibb.co/hxxz1mn4/after.png) |
+
 ## Features
 
 - Caption generation with different style presets
@@ -405,27 +409,3 @@ Logs are saved in `./logs/captions.log` and include:
 - Processing errors
 - Performance information
 - Temporary file cleanup
-
-## Error Handling
-
-The API automatically handles:
-- Uploaded file validation
-- FFmpeg errors
-- Temporary file cleanup
-- Processing timeouts
-- Memory errors
-
-## Security
-
-- Helmet protection enabled
-- Strict file type validation
-- Upload size limitation
-- Automatic temporary file cleanup
-- Access logging
-
-## Performance
-
-- Streaming processing for large files
-- Automatic cleanup after sending
-- Font size optimization based on resolution
-- Optimized buffer for FFmpeg (50MB)
