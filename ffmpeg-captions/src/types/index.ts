@@ -23,6 +23,8 @@ export interface TranscriptionData {
 export interface CaptionStyle {
   fontFamily: string;
   fontSize: number;
+  fontWeight: number; // 100-900 for font variants
+  uppercase: boolean;
   textColor: string; // hex without #
   outlineColor: string; // hex without #
   outlineWidth: number;
@@ -30,15 +32,10 @@ export interface CaptionStyle {
   activeWordOutlineWidth: number;
   position: "top" | "center" | "bottom";
   positionOffset: number; // vertical offset in pixels (+ down, - up)
-  marginHorizontal: number;
-  bold: boolean;
-  italic?: boolean;
-  uppercase: boolean;
-  // Futurs paramètres
-  backgroundColor?: string;
-  backgroundOpacity?: number;
-  shadow?: boolean;
-  animation?: "none" | "fade" | "slide";
+  backgroundColor: string; // hex without #
+  backgroundOpacity: number; // 0-100
+  activeWordBackgroundColor: string; // hex without #
+  activeWordBackgroundOpacity: number; // 0-100
 }
 
 export interface CustomizableParam {
@@ -80,6 +77,12 @@ export interface GoogleFont {
   family: string;
   variants: string[];
   category: string;
+}
+
+export interface FontVariant {
+  name: string;
+  weight: number;
+  style: 'normal' | 'italic';
 }
 
 export interface VideoResolution {

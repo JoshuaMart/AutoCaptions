@@ -85,6 +85,35 @@ router.get('/fonts', (req: Request, res: Response): void => {
   }
 });
 
+// GET /fonts/:family/variants - Get font variants for a specific font family
+router.get('/fonts/:family/variants', (req: Request, res: Response): void => {
+  try {
+    const { family } = req.params;
+    
+    if (!fontService.isValidFont(family)) {
+      res.status(404).json({
+        success: false,
+        error: `Font family '${family}' not found`
+      });
+      return;
+    }
+    
+    const variants = fontService.getFontVariants(family);
+    
+    res.json({
+      success: true,
+      family,
+      variants
+    });
+  } catch (error) {
+    logger.error('Error fetching font variants:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch font variants'
+    });
+  }
+});
+
 // POST /generate - Generate captions video
 router.post('/generate', upload.single('video'), async (req: Request, res: Response): Promise<void> => {
   let videoPath: string | null = null;

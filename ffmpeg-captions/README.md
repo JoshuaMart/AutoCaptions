@@ -70,9 +70,9 @@ Lists all available presets.
   "success": true,
   "presets": [
     {
-      "name": "simple",
-      "displayName": "Simple",
-      "description": "White text with black border, current word in yellow"
+      "name": "custom",
+      "displayName": "Custom",
+      "description": "Fully customizable caption style with all available parameters"
     }
   ]
 }
@@ -86,41 +86,57 @@ Details of a specific preset with customizable parameters.
 {
   "success": true,
   "preset": {
-    "name": "simple",
-    "displayName": "Simple",
-    "description": "White text with black border, current word in yellow",
+    "name": "custom",
+    "displayName": "Custom",
+    "description": "Fully customizable caption style with all available parameters",
     "defaults": {
-      "fontFamily": "Arial Black",
+      "fontFamily": "Inter",
       "fontSize": 80,
+      "fontWeight": 700,
+      "uppercase": false,
       "textColor": "FFFFFF",
       "outlineColor": "000000",
-      "outlineWidth": 5,
+      "outlineWidth": 4,
       "activeWordColor": "FFFF00",
-      "activeWordOutlineWidth": 5,
+      "activeWordOutlineWidth": 4,
       "position": "center",
       "positionOffset": 300,
-      "marginHorizontal": 20,
-      "bold": true,
-      "uppercase": true
+      "backgroundColor": "000000",
+      "backgroundOpacity": 0,
+      "activeWordBackgroundColor": "FF6B35",
+      "activeWordBackgroundOpacity": 80
     },
     "customizable": [
       {
         "key": "fontFamily",
         "type": "font",
-        "label": "Font"
+        "label": "Font Family"
       },
       {
-        "key": "position",
-        "type": "select",
-        "label": "Base position",
-        "options": ["top", "center", "bottom"]
-      },
-      {
-        "key": "positionOffset",
+        "key": "fontSize",
         "type": "number",
-        "label": "Vertical offset",
-        "min": -500,
-        "max": 500
+        "label": "Font Size",
+        "min": 40,
+        "max": 150
+      },
+      {
+        "key": "fontWeight",
+        "type": "number",
+        "label": "Font Weight",
+        "min": 100,
+        "max": 900
+      },
+      {
+        "key": "activeWordBackgroundColor",
+        "type": "color",
+        "label": "Active Word Background Color"
+      },
+      {
+        "key": "activeWordBackgroundOpacity",
+        "type": "number",
+        "label": "Active Word Background Opacity (%)",
+        "min": 0,
+        "max": 100
       }
     ]
   }
@@ -145,11 +161,67 @@ Lists all available fonts.
     },
     {
       "family": "Inter",
-      "variants": ["400", "700", "900"],
+      "variants": ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
       "category": "sans-serif"
     }
   ],
   "categories": ["sans-serif", "display"]
+}
+```
+
+### GET /api/captions/fonts/:family/variants
+Get available font variants (weights) for a specific font family.
+
+**Parameters:**
+- `family`: Font family name (e.g., "Montserrat", "Inter")
+
+**Response:**
+```json
+{
+  "success": true,
+  "family": "Montserrat",
+  "variants": [
+    {
+      "name": "Thin",
+      "weight": 100,
+      "style": "normal"
+    },
+    {
+      "name": "Light",
+      "weight": 300,
+      "style": "normal"
+    },
+    {
+      "name": "Regular",
+      "weight": 400,
+      "style": "normal"
+    },
+    {
+      "name": "Medium",
+      "weight": 500,
+      "style": "normal"
+    },
+    {
+      "name": "Semi Bold",
+      "weight": 600,
+      "style": "normal"
+    },
+    {
+      "name": "Bold",
+      "weight": 700,
+      "style": "normal"
+    },
+    {
+      "name": "Extra Bold",
+      "weight": 800,
+      "style": "normal"
+    },
+    {
+      "name": "Black",
+      "weight": 900,
+      "style": "normal"
+    }
+  ]
 }
 ```
 
@@ -163,10 +235,13 @@ Generates a video with embedded captions.
 **JSON format:**
 ```json
 {
-  "preset": "simple",
+  "preset": "custom",
   "customStyle": {
     "fontSize": 90,
-    "activeWordColor": "FF0000"
+    "fontWeight": 800,
+    "activeWordColor": "FF0000",
+    "activeWordBackgroundColor": "FFFF00",
+    "activeWordBackgroundOpacity": 70
   },
   "transcriptionData": {
     "success": true,

@@ -61,7 +61,7 @@ function groupWordsByTime(
 }
 
 function getAlignment(position: string): number {
-  // We always use low-center alignment (2) for greater control
+  // We always use bottom-center alignment (2) for greater control
   // and calculate position via marginV
   return 2;
 }
@@ -77,12 +77,19 @@ function hexToBGR(hex: string): string {
   return `${b}${g}${r}`;
 }
 
+function opacityToAlpha(opacity: number): string {
+  // Convert opacity (0-100) to ASS alpha (00-FF)
+  // 100% opacity = 00 (opaque), 0% opacity = FF (transparent)
+  const alpha = Math.round((100 - opacity) * 2.55);
+  return alpha.toString(16).padStart(2, "0").toUpperCase();
+}
+
 function calculateMargins(
   style: CaptionStyle,
   resolution: VideoResolution,
 ): { marginL: number; marginR: number; marginV: number } {
-  const marginL = style.marginHorizontal;
-  const marginR = style.marginHorizontal;
+  const marginL = 20; // Fixed horizontal margins
+  const marginR = 20;
 
   // Vertical position calculation based on position + offset
   // Always use bottom alignment (2), so marginV = distance from bottom
@@ -110,6 +117,46 @@ function calculateMargins(
   return { marginL, marginR, marginV };
 }
 
+function createWordTag(
+  word: Caption,
+  style: CaptionStyle,
+  isActive: boolean,
+  adjustedFontSize: number,
+): string {
+  const text = style.uppercase ? word.text.toUpperCase() : word.text;
+  
+  if (isActive) {
+    // Active word styling
+    const activeColorBGR = hexToBGR(style.activeWordColor);
+    const activeOutlineBGR = hexToBGR(style.outlineColor);
+    
+    let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
+    tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
+    
+    // Add active word background if specified
+    if (style.activeWordBackgroundOpacity > 0) {
+      const bgColorBGR = hexToBGR(style.activeWordBackgroundColor);
+      const bgAlpha = opacityToAlpha(style.activeWordBackgroundOpacity);
+      
+      // Create background using box drawing (\\4c is shadow/background color)
+      tags += `\\4c&H${bgAlpha}${bgColorBGR}&\\shad4`;
+    } else {
+      tags += `\\shad0`;
+    }
+    
+    return `{${tags}}${text}{\\r}`;
+  } else {
+    // Normal word styling
+    const textColorBGR = hexToBGR(style.textColor);
+    const outlineColorBGR = hexToBGR(style.outlineColor);
+    
+    let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${textColorBGR}&`;
+    tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}\\shad0`;
+    
+    return `{${tags}}${text}{\\r}`;
+  }
+}
+
 export function generateASS(
   captions: Caption[],
   videoPath: string,
@@ -127,33 +174,20 @@ export function generateASS(
     );
     const adjustedFontSize = Math.round(style.fontSize * scaleFactor);
 
-    // For ASS, if you want a custom background, you must use BorderStyle 3
-    // and adjust the outline color so that it serves as the background.
-    const hasCustomBackground =
-      style.backgroundColor &&
-      style.backgroundOpacity !== undefined &&
-      style.backgroundOpacity > 0;
+    // Determine if we need line background
+    const hasLineBackground = style.backgroundOpacity > 0;
+    
+    // Colors in BGR format
+    const textColorBGR = hexToBGR(style.textColor);
+    const outlineColorBGR = hexToBGR(style.outlineColor);
+    const backgroundColorBGR = hexToBGR(style.backgroundColor);
+    const backgroundAlpha = opacityToAlpha(style.backgroundOpacity);
 
-    // Calculate color and alpha for background
-    let backgroundColorBGR = "000000";
-    let backgroundAlpha = "FF";
-
-    if (hasCustomBackground) {
-      backgroundColorBGR = hexToBGR(style.backgroundColor!);
-      // Convertir l'opacité (0-100) en ASS alpha (00-FF)
-      // 100% d'opacité = 00 (opaque), 0% d'opacité = FF (transparent)
-      backgroundAlpha = Math.round((100 - style.backgroundOpacity!) * 2.55)
-        .toString(16)
-        .padStart(2, "0")
-        .toUpperCase();
-    }
-
-    // BorderStyle: 4 if custom background (box background), 1 otherwise
-    const borderStyle = hasCustomBackground ? 4 : 1;
-
-    // For BorderStyle=4, the background color is controlled by Shadow
-    const shadowColor = hasCustomBackground ? backgroundColorBGR : "000000";
-    const shadowAlpha = hasCustomBackground ? backgroundAlpha : "FF";
+    // BorderStyle: 4 for box background, 1 for normal outline
+    const borderStyle = hasLineBackground ? 4 : 1;
+    
+    // For BorderStyle=4, the background is controlled by BackColour
+    const backColour = hasLineBackground ? `&H${backgroundAlpha}${backgroundColorBGR}&` : "&H0&";
 
     let ass = `[Script Info]
 ScriptType: v4.00+
@@ -162,7 +196,7 @@ PlayResY: ${resolution.height}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${style.fontFamily},${adjustedFontSize},&H${hexToBGR(style.textColor)},&H0,&H${hexToBGR(style.outlineColor)},&H${shadowAlpha}${shadowColor}&,${style.bold ? 1 : 0},${style.italic ? 1 : 0},0,0,100,100,0,0,${borderStyle},${style.outlineWidth},0,${alignment},${margins.marginL},${margins.marginR},${margins.marginV},1
+Style: Default,${style.fontFamily},${adjustedFontSize},&H${textColorBGR}&,&H0&,&H${outlineColorBGR}&,${backColour},${style.fontWeight >= 700 ? 1 : 0},0,0,0,100,100,0,0,${borderStyle},${style.outlineWidth},0,${alignment},${margins.marginL},${margins.marginR},${margins.marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -179,34 +213,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         const end = secToASS(currentWord.endInSeconds);
 
         const line = group
-          .map((word, idx) => {
-            const text = style.uppercase ? word.text.toUpperCase() : word.text;
-
-            if (idx === wordIdx) {
-              // Current word: special color
-              const activeColorBGR = hexToBGR(style.activeWordColor);
-
-              if (hasCustomBackground) {
-                // With background: use default style (BorderStyle=4)
-                return `{\\1c&H${activeColorBGR}&}${text}{\\r}`;
-              } else {
-                // No background: normal style with border
-                const outlineColorBGR = hexToBGR(style.outlineColor);
-                return `{\\bord${style.activeWordOutlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${activeColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
-              }
-            } else {
-              // Other words: normal style
-              if (hasCustomBackground) {
-                // With background: use default style
-                return text;
-              } else {
-                // No background: normal style with border
-                const textColorBGR = hexToBGR(style.textColor);
-                const outlineColorBGR = hexToBGR(style.outlineColor);
-                return `{\\bord${style.outlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${textColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
-              }
-            }
-          })
+          .map((word, idx) => createWordTag(
+            word,
+            style,
+            idx === wordIdx, // isActive
+            adjustedFontSize
+          ))
           .join(" ");
 
         ass += `Dialogue: 0,${start},${end},Default,,0,0,0,,${line}\n`;

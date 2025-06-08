@@ -122,10 +122,10 @@ export class PresetService {
           }
           break;
         case 'font':
-          // Font validation could be added here
           if (typeof value !== 'string') {
             errors.push(`Parameter '${key}' must be a string`);
           }
+          // Additional font validation could be added here
           break;
       }
     }

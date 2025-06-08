@@ -1,0 +1,114 @@
+{
+  "name": "custom",
+  "displayName": "Custom",
+  "description": "Fully customizable caption style with all available parameters",
+  "defaults": {
+    "fontFamily": "Inter",
+    "fontSize": 80,
+    "fontWeight": 700,
+    "uppercase": false,
+    "textColor": "FFFFFF",
+    "outlineColor": "000000",
+    "outlineWidth": 4,
+    "activeWordColor": "FFFF00",
+    "activeWordOutlineWidth": 4,
+    "position": "center",
+    "positionOffset": 300,
+    "backgroundColor": "000000",
+    "backgroundOpacity": 0,
+    "activeWordBackgroundColor": "FF6B35",
+    "activeWordBackgroundOpacity": 80
+  },
+  "customizable": [
+    {
+      "key": "fontFamily",
+      "type": "font",
+      "label": "Font Family"
+    },
+    {
+      "key": "fontSize",
+      "type": "number",
+      "label": "Font Size",
+      "min": 40,
+      "max": 150
+    },
+    {
+      "key": "fontWeight",
+      "type": "number",
+      "label": "Font Weight",
+      "min": 100,
+      "max": 900
+    },
+    {
+      "key": "uppercase",
+      "type": "boolean",
+      "label": "Uppercase"
+    },
+    {
+      "key": "textColor",
+      "type": "color",
+      "label": "Text Color"
+    },
+    {
+      "key": "outlineColor",
+      "type": "color",
+      "label": "Outline Color"
+    },
+    {
+      "key": "outlineWidth",
+      "type": "number",
+      "label": "Outline Width",
+      "min": 0,
+      "max": 20
+    },
+    {
+      "key": "activeWordColor",
+      "type": "color",
+      "label": "Active Word Color"
+    },
+    {
+      "key": "activeWordOutlineWidth",
+      "type": "number",
+      "label": "Active Word Outline Width",
+      "min": 0,
+      "max": 20
+    },
+    {
+      "key": "position",
+      "type": "select",
+      "label": "Position",
+      "options": ["top", "center", "bottom"]
+    },
+    {
+      "key": "positionOffset",
+      "type": "number",
+      "label": "Position Offset",
+      "min": -500,
+      "max": 500
+    },
+    {
+      "key": "backgroundColor",
+      "type": "color",
+      "label": "Background Color"
+    },
+    {
+      "key": "backgroundOpacity",
+      "type": "number",
+      "label": "Background Opacity (%)",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "key": "activeWordBackgroundColor",
+      "type": "color",
+      "label": "Active Word Background Color"
+    },
+    {
+      "key": "activeWordBackgroundOpacity",
+      "type": "number",
+      "label": "Active Word Background Opacity (%)",
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

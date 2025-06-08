@@ -42,7 +42,7 @@ export class CaptionService {
       }
       
       // Get style configuration
-      const presetName = request.preset || 'simple';
+      const presetName = request.preset || 'custom';
       const style = presetService.getPresetStyle(presetName, request.customStyle);
       
       if (!style) {
