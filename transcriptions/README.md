@@ -44,6 +44,10 @@ REST API service for transcribing audio and video files using OpenAI Whisper or 
 | `WHISPER_CPP_VERSION` | Whisper.cpp version to install | `1.7.5` |
 | `WHISPER_MODEL` | Whisper model to use | `medium` |
 | `MAX_FILE_SIZE` | Maximum file size in bytes | `524288000` (500MB) |
+| `UPLOAD_DIR` | Upload files folder | `./uploads` |
+| `TEMP_DIR` | Transition folder | `./temp` |
+| `LOG_LEVEL` | Log message level | `./logs/captions.log` |
+| `LOG_FILE` | Log message level | `./logs/captions.log` |
 
 ## Usage
 
