@@ -31,20 +31,18 @@ REST API service for transcribing audio and video files using OpenAI Whisper or 
    cp .env.example .env
    ```
 
-4. Configure your environment variables in `.env`:
-   - Set `TRANSCRIPTION_SERVICE` to either `openai-whisper` or `whisper-cpp`
-   - If using OpenAI Whisper, set your `OPENAI_API_KEY`
-   - Configure other settings as needed
+4. Configure your environment variables in `.env` file
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `PORT` | Server port | `3001` |
+| `NODE_ENV` | | `development` |
 | `TRANSCRIPTION_SERVICE` | Service to use: `openai-whisper` or `whisper-cpp` | `whisper-cpp` |
 | `OPENAI_API_KEY` | OpenAI API key (required for openai-whisper) | - |
 | `WHISPER_CPP_VERSION` | Whisper.cpp version to install | `1.7.5` |
 | `WHISPER_MODEL` | Whisper model to use | `medium` |
-| `PORT` | Server port | `3001` |
 | `MAX_FILE_SIZE` | Maximum file size in bytes | `524288000` (500MB) |
 
 ## Usage
@@ -155,15 +153,6 @@ src/
 ├── types/           # TypeScript type definitions
 └── utils/           # Utility functions
 ```
-
-## Dependencies
-
-- **Express.js**: Web framework
-- **Multer**: File upload handling
-- **FFmpeg**: Audio/video processing
-- **@remotion/openai-whisper**: OpenAI Whisper integration
-- **@remotion/install-whisper-cpp**: Whisper.cpp integration
-- **Winston**: Logging
 
 ## License
 
