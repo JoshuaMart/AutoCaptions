@@ -43,6 +43,7 @@ app.get("/", (req, res): void => {
       presets: "/api/captions/presets",
       fonts: "/api/captions/fonts",
       generate: "/api/captions/generate",
+      preview: "/api/captions/preview",
     },
   });
 });

@@ -11,9 +11,11 @@ function secToASS(sec: number): string {
 }
 
 function calculateEndTime(captions: Caption[], currentIndex: number): number {
-  // If endInSeconds is defined and > 0, use it
-  if (captions[currentIndex].endInSeconds > 0) {
-    return captions[currentIndex].endInSeconds;
+  const caption = captions[currentIndex];
+  
+  // If endInSeconds is defined and valid, use it
+  if (caption.endInSeconds !== undefined && caption.endInSeconds > caption.startInSeconds) {
+    return caption.endInSeconds;
   }
 
   // Otherwise, use the beginning of the following word
@@ -22,7 +24,7 @@ function calculateEndTime(captions: Caption[], currentIndex: number): number {
   }
 
   // For the last word, add a default duration
-  return captions[currentIndex].startInSeconds + 0.5;
+  return caption.startInSeconds + 0.5;
 }
 
 function groupWordsByTime(
@@ -218,8 +220,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     const wordGroups = groupWordsByTime(captions);
 
+    logger.info(`Generated ${wordGroups.length} word groups for ASS generation`);
+    
     for (let groupIdx = 0; groupIdx < wordGroups.length; groupIdx++) {
       const group = wordGroups[groupIdx];
+      logger.info(`Group ${groupIdx}: ${group.length} words from ${group[0].startInSeconds}s to ${group[group.length-1].endInSeconds}s`);
 
       for (let wordIdx = 0; wordIdx < group.length; wordIdx++) {
         const currentWord = group[wordIdx];
@@ -235,7 +240,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           ))
           .join(" ");
 
-        ass += `Dialogue: 0,${start},${end},Default,,0,0,0,,${line}\n`;
+        const dialogue = `Dialogue: 0,${start},${end},Default,,0,0,0,,${line}`;
+        ass += dialogue + "\n";
+        
+        // Log first few dialogues for debugging
+        if (groupIdx === 0 && wordIdx < 3) {
+          logger.info(`Dialogue ${wordIdx}: ${dialogue}`);
+        }
       }
     }
 

@@ -77,6 +77,19 @@ export interface GenerateCaptionsResponse {
   };
 }
 
+export interface GeneratePreviewResponse {
+  success: boolean;
+  imagePath?: string;
+  error?: string;
+  processingTime?: number;
+  metadata?: {
+    preset: string;
+    style: CaptionStyle;
+    timestamp: string;
+    frameTimestamp: number;
+  };
+}
+
 export interface GoogleFont {
   family: string;
   variants: string[];

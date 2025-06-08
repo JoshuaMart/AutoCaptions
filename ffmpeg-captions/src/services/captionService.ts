@@ -1,11 +1,99 @@
-import { GenerateCaptionsRequest, GenerateCaptionsResponse, CaptionStyle } from '../types';
+import { GenerateCaptionsRequest, GenerateCaptionsResponse, GeneratePreviewResponse, CaptionStyle } from '../types';
 import { presetService } from './presetService';
 import { generateASS } from './assGenerator';
 import { ffmpegService } from './ffmpegService';
 import { validateVideoFormat } from '../utils/videoValidator';
 import logger from '../utils/logger';
+import path from 'path';
+import fs from 'fs';
+import config from '../config';
 
 export class CaptionService {
+  
+  /**
+   * Find the best timestamp for preview generation based on caption data
+   * @param captions Array of captions
+   * @param preferredPosition 'start' | 'middle' | 'end' - preferred position in the video
+   * @returns Optimal timestamp for preview
+   */
+  findOptimalPreviewTimestamp(
+    captions: Caption[], 
+    preferredPosition: 'start' | 'middle' | 'end' = 'middle'
+  ): { timestamp: number; caption: Caption; reason: string } {
+    if (!captions || captions.length === 0) {
+      return { timestamp: 0, caption: null as any, reason: 'No captions available' };
+    }
+
+    let targetIndex: number;
+    let reason: string;
+
+    switch (preferredPosition) {
+      case 'start':
+        // Find first caption that has a reasonable duration
+        targetIndex = captions.findIndex(cap => {
+          const duration = (cap.endInSeconds || cap.startInSeconds + 0.5) - cap.startInSeconds;
+          return duration >= 0.3; // At least 300ms
+        });
+        if (targetIndex === -1) targetIndex = 0;
+        reason = 'First caption with good duration';
+        break;
+        
+      case 'end':
+        // Find last caption that has a reasonable duration
+        for (let i = captions.length - 1; i >= 0; i--) {
+          const cap = captions[i];
+          const duration = (cap.endInSeconds || cap.startInSeconds + 0.5) - cap.startInSeconds;
+          if (duration >= 0.3) {
+            targetIndex = i;
+            break;
+          }
+        }
+        if (targetIndex === undefined) targetIndex = captions.length - 1;
+        reason = 'Last caption with good duration';
+        break;
+        
+      case 'middle':
+      default:
+        // Find caption in the middle, preferring longer captions
+        const middleTime = captions.length > 1 
+          ? (captions[captions.length - 1].startInSeconds - captions[0].startInSeconds) / 2 + captions[0].startInSeconds
+          : captions[0].startInSeconds;
+          
+        // Find caption closest to middle time with good duration
+        let bestIndex = 0;
+        let bestScore = Infinity;
+        
+        captions.forEach((cap, idx) => {
+          const duration = (cap.endInSeconds || cap.startInSeconds + 0.5) - cap.startInSeconds;
+          const timeDistance = Math.abs(cap.startInSeconds - middleTime);
+          
+          // Score: prefer captions closer to middle with longer duration
+          const score = timeDistance - (duration * 2); // Favor longer captions
+          
+          if (score < bestScore && duration >= 0.2) {
+            bestScore = score;
+            bestIndex = idx;
+          }
+        });
+        
+        targetIndex = bestIndex;
+        reason = 'Middle caption with optimal duration';
+        break;
+    }
+
+    const selectedCaption = captions[targetIndex];
+    const captionStart = selectedCaption.startInSeconds;
+    const captionEnd = selectedCaption.endInSeconds || captionStart + 0.5;
+    
+    // Use middle of the caption for optimal visibility
+    const timestamp = captionStart + (captionEnd - captionStart) / 2;
+    
+    return {
+      timestamp,
+      caption: selectedCaption,
+      reason: `${reason}: "${selectedCaption.text}" at ${timestamp.toFixed(2)}s`
+    };
+  }
   
   async generateCaptionsVideo(
     videoPath: string, 
@@ -67,6 +155,15 @@ export class CaptionService {
       
       // Generate ASS subtitle content
       const assContent = generateASS(captions, videoPath, style);
+      
+      // Debug: Save a copy of the ASS content for inspection
+      const debugAssPath = path.join(config.upload.tempDir, `debug_preview_${Date.now()}.ass`);
+      try {
+        fs.writeFileSync(debugAssPath, assContent, 'utf-8');
+        logger.info(`Debug: Preview ASS content saved to ${debugAssPath}`);
+      } catch (debugError) {
+        logger.warn('Could not save debug preview ASS file:', debugError);
+      }
       
       // Create ASS file
       assPath = await ffmpegService.createAssFile(assContent);
@@ -152,6 +249,132 @@ export class CaptionService {
     }
     
     return { isValid: true };
+  }
+  
+  async generatePreviewFrame(
+    videoPath: string, 
+    request: GenerateCaptionsRequest,
+    timestamp: number
+  ): Promise<GeneratePreviewResponse> {
+    const startTime = Date.now();
+    let assPath: string | null = null;
+    let imagePath: string | null = null;
+    
+    try {
+      // Validate video format
+      const validation = validateVideoFormat(videoPath);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          error: validation.error
+        };
+      }
+      
+      // Validate transcription data
+      if (!request.transcriptionData?.transcription?.captions) {
+        return {
+          success: false,
+          error: 'Invalid transcription data provided'
+        };
+      }
+      
+      const captions = request.transcriptionData.transcription.captions;
+      if (captions.length === 0) {
+        return {
+          success: false,
+          error: 'No captions found in transcription data'
+        };
+      }
+      
+      // Get style configuration
+      const presetName = request.preset || 'custom';
+      const style = presetService.getPresetStyle(presetName, request.customStyle);
+      
+      if (!style) {
+        return {
+          success: false,
+          error: `Preset '${presetName}' not found`
+        };
+      }
+      
+      // Validate customizations if provided
+      if (request.customStyle) {
+        const validation = presetService.validateCustomizations(presetName, request.customStyle);
+        if (!validation.isValid) {
+          return {
+            success: false,
+            error: `Invalid customizations: ${validation.errors.join(', ')}`
+          };
+        }
+      }
+      
+      logger.info(`Generating preview frame with preset '${presetName}' at timestamp ${timestamp}s`);
+      
+      // Check if there are any captions that should be visible at the requested timestamp
+      const visibleCaptions = captions.filter(caption => {
+        const endTime = caption.endInSeconds || caption.startInSeconds + 0.5;
+        return caption.startInSeconds <= timestamp && endTime >= timestamp;
+      });
+      
+      if (visibleCaptions.length === 0) {
+        logger.warn(`No captions visible at timestamp ${timestamp}s. Available caption times:`);
+        captions.forEach((caption, idx) => {
+          const endTime = caption.endInSeconds || caption.startInSeconds + 0.5;
+          logger.warn(`  ${idx}: "${caption.text}" (${caption.startInSeconds}s - ${endTime}s)`);
+        });
+      } else {
+        logger.info(`Found ${visibleCaptions.length} visible captions at ${timestamp}s:`);
+        visibleCaptions.forEach(caption => {
+          logger.info(`  "${caption.text}" (${caption.startInSeconds}s - ${caption.endInSeconds || caption.startInSeconds + 0.5}s)`);
+        });
+      }
+      
+      // Generate ASS subtitle content
+      const assContent = generateASS(captions, videoPath, style);
+      
+      // Create ASS file
+      assPath = await ffmpegService.createAssFile(assContent);
+      
+      // Generate preview frame with subtitles
+      imagePath = await ffmpegService.generatePreviewFrame(videoPath, assPath, timestamp);
+      
+      const processingTime = Date.now() - startTime;
+      
+      logger.info(`Preview frame generation completed in ${processingTime}ms`);
+      
+      return {
+        success: true,
+        imagePath,
+        processingTime,
+        metadata: {
+          preset: presetName,
+          style,
+          timestamp: new Date().toISOString(),
+          frameTimestamp: timestamp
+        }
+      };
+      
+    } catch (error) {
+      logger.error('Preview frame generation failed:', error);
+      
+      // Cleanup temporary files
+      if (assPath) {
+        ffmpegService.cleanupFiles(assPath);
+      }
+      if (imagePath) {
+        ffmpegService.cleanupFiles(imagePath);
+      }
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    } finally {
+      // Always cleanup ASS file
+      if (assPath) {
+        ffmpegService.cleanupFiles(assPath);
+      }
+    }
   }
 }
 

@@ -228,6 +228,147 @@ router.post('/generate', upload.single('video'), async (req: Request, res: Respo
   }
 });
 
+// POST /preview - Generate preview frame with captions
+router.post('/preview', upload.single('video'), async (req: Request, res: Response): Promise<void> => {
+  let videoPath: string | null = null;
+  let previewPath: string | null = null;
+  
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        error: 'Video file is required'
+      });
+      return;
+    }
+    
+    videoPath = req.file.path;
+    
+    // Validate video format
+    const validation = validateVideoFormat(videoPath);
+    if (!validation.isValid) {
+      res.status(400).json({
+        success: false,
+        error: validation.error
+      });
+      return;
+    }
+    
+    // Parse request body
+    let requestData;
+    try {
+      requestData = typeof req.body.data === 'string' 
+        ? JSON.parse(req.body.data) 
+        : req.body;
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid JSON in request body'
+      });
+      return;
+    }
+    
+    // Validate request
+    const requestValidation = captionService.validateRequest(requestData);
+    if (!requestValidation.isValid) {
+      res.status(400).json({
+        success: false,
+        error: requestValidation.error
+      });
+      return;
+    }
+    
+    // Validate timestamp parameter
+    let timestamp = parseFloat(req.query.timestamp as string || '');
+    const position = (req.query.position as string || 'middle') as 'start' | 'middle' | 'end';
+    
+    // Validate position parameter
+    if (!['start', 'middle', 'end'].includes(position)) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid position parameter. Must be "start", "middle", or "end".'
+      });
+      return;
+    }
+    
+    // If no timestamp provided or invalid, find a good timestamp from captions
+    if (isNaN(timestamp) || timestamp < 0) {
+      // Extract captions to find a suitable timestamp
+      const captions = requestData.transcriptionData?.transcription?.captions;
+      if (captions && captions.length > 0) {
+        const optimal = captionService.findOptimalPreviewTimestamp(captions, position);
+        timestamp = optimal.timestamp;
+        logger.info(`No timestamp provided, auto-selected: ${optimal.reason}`);
+      } else {
+        timestamp = 0;
+        logger.warn('No timestamp provided and no captions available, defaulting to 0s');
+      }
+    }
+    
+    logger.info(`Generating preview frame at ${timestamp}s for file: ${req.file.originalname}`);
+    
+    // Generate preview frame
+    const result = await captionService.generatePreviewFrame(videoPath, requestData, timestamp);
+    
+    if (!result.success) {
+      res.status(400).json(result);
+      return;
+    }
+    
+    previewPath = result.imagePath!;
+    
+    // Send the image file
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="preview_${req.file.originalname.replace(/\.[^/.]+$/, "")}.png"`);
+    
+    const stream = fs.createReadStream(previewPath);
+    stream.pipe(res);
+    
+    // Cleanup after response is sent
+    stream.on('end', () => {
+      if (videoPath) {
+        fs.unlink(videoPath, (err) => {
+          if (err) logger.error('Failed to cleanup input video:', err);
+        });
+      }
+      if (previewPath) {
+        fs.unlink(previewPath, (err) => {
+          if (err) logger.error('Failed to cleanup preview image:', err);
+        });
+      }
+    });
+    
+    stream.on('error', (error) => {
+      logger.error('Error streaming preview image:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to send preview image'
+        });
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error in preview endpoint:', error);
+    
+    // Cleanup files
+    if (videoPath && fs.existsSync(videoPath)) {
+      fs.unlinkSync(videoPath);
+    }
+    if (previewPath && fs.existsSync(previewPath)) {
+      fs.unlinkSync(previewPath);
+    }
+    
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+});
+
 // Health check endpoint
 router.get('/health', (req: Request, res: Response): void => {
   res.json({

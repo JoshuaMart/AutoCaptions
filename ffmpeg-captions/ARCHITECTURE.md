@@ -59,12 +59,12 @@ Request → PresetService → StyleMerger → Validation
 
 ### 3. Subtitle Generation
 ```
-Captions → ASS Generator → Temp File → FFmpeg → Output Video
+Captions → ASS Generator → Temp File → FFmpeg → Output Video/Preview
 ```
 - Convert timestamps to ASS format
 - Group words by line
 - Apply styles (colors, fonts, positions)
-- Embed with FFmpeg
+- Embed with FFmpeg (video) or extract frame (preview)
 
 ### 4. Streaming and Cleanup
 ```
@@ -92,7 +92,8 @@ Output Video → HTTP Stream → Client
 ### FFmpegService
 **Responsibility:** FFmpeg interface
 - Temporary ASS file creation
-- FFmpeg command execution
+- FFmpeg command execution for video processing
+- FFmpeg command execution for preview frame generation
 - Buffer management for large files
 - Automatic cleanup
 
@@ -138,6 +139,21 @@ Output Video → HTTP Stream → Client
 3. Test FFmpeg compatibility
 
 ## AutoCaptions Integration
+
+### Preview Feature
+The preview endpoint allows users to:
+- Generate a single frame with captions at any timestamp
+- Test caption styling before processing the full video
+- Provide instant visual feedback in UI applications
+- Validate caption positioning and appearance
+
+**Preview Process:**
+1. Upload video file and caption configuration
+2. Specify timestamp via query parameter
+3. Generate ASS subtitle file
+4. Extract single frame with FFmpeg using `-ss` and `-vframes 1`
+5. Apply subtitle overlay and return PNG image
+6. Automatic cleanup of temporary files
 
 ### With Transcription Service
 - Standardized exchange format (JSON)

@@ -312,6 +312,49 @@ Generates a video with embedded captions.
 - Success: Video file streaming (Content-Type: video/mp4)
 - Error: JSON with error details
 
+### POST /api/captions/preview
+Generates a preview frame with captions at a specific timestamp.
+
+**Parameters:**
+- `video`: Video file (multipart/form-data)
+- `data`: JSON containing configuration (same format as generate endpoint)
+- `timestamp`: Query parameter - timestamp in seconds for the preview frame (optional)
+- `position`: Query parameter - preferred position when auto-selecting timestamp: "start", "middle", or "end" (default: "middle")
+
+**Smart Timestamp Selection:**
+If no timestamp is provided, the API automatically selects an optimal timestamp based on the caption data:
+- `start`: First caption with good duration (≥300ms)
+- `middle`: Caption closest to video middle with optimal duration
+- `end`: Last caption with good duration
+
+**Examples:**
+```bash
+# Auto-select optimal timestamp (middle caption)
+curl -X POST \
+  -F "video=@video.mp4" \
+  -F "data={\"preset\":\"custom\",\"transcriptionData\":{...}}" \
+  "http://localhost:3002/api/captions/preview" \
+  --output preview.png
+
+# Auto-select from start of video
+curl -X POST \
+  -F "video=@video.mp4" \
+  -F "data={...}" \
+  "http://localhost:3002/api/captions/preview?position=start" \
+  --output preview_start.png
+
+# Specific timestamp
+curl -X POST \
+  -F "video=@video.mp4" \
+  -F "data={...}" \
+  "http://localhost:3002/api/captions/preview?timestamp=2.5" \
+  --output preview_2_5s.png
+```
+
+**Response:**
+- Success: PNG image file streaming (Content-Type: image/png)
+- Error: JSON with error details
+
 ## File Validation
 
 The API automatically validates:
@@ -414,6 +457,20 @@ curl -X POST \
   -F "data={\"preset\":\"simple\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
   http://localhost:3002/api/captions/generate \
   --output result.mp4
+
+# Generate preview frame (auto-select optimal timestamp)
+curl -X POST \
+  -F "video=@video.mp4" \
+  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
+  http://localhost:3002/api/captions/preview \
+  --output preview.png
+
+# Generate preview frame at 2.5 seconds
+curl -X POST \
+  -F "video=@video.mp4" \
+  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
+  "http://localhost:3002/api/captions/preview?timestamp=2.5" \
+  --output preview.png
 ```
 
 ## Logs
