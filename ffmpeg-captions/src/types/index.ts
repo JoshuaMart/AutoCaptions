@@ -36,8 +36,10 @@ export interface CaptionStyle {
   positionOffset: number; // vertical offset in pixels (+ down, - up)
   backgroundColor: string; // hex without #
   backgroundOpacity: number; // 0-100
-  activeWordBackgroundColor: string; // hex without #
-  activeWordBackgroundOpacity: number; // 0-100
+  shadowColor: string; // hex without #
+  shadowOpacity: number; // 0-100
+  activeWordShadowColor: string; // hex without #
+  activeWordShadowOpacity: number; // 0-100
 }
 
 export interface CustomizableParam {

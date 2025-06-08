@@ -137,13 +137,13 @@ function createWordTag(
     let tags = `\\fs${activeWordSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
     tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
     
-    // Add active word background if specified
-    if (style.activeWordBackgroundOpacity > 0) {
-      const bgColorBGR = hexToBGR(style.activeWordBackgroundColor);
-      const bgAlpha = opacityToAlpha(style.activeWordBackgroundOpacity);
+    // Add active word shadow if specified
+    if (style.activeWordShadowOpacity > 0) {
+      const shadowColorBGR = hexToBGR(style.activeWordShadowColor);
+      const shadowAlpha = opacityToAlpha(style.activeWordShadowOpacity);
       
-      // Create background using box drawing (\\4c is shadow/background color)
-      tags += `\\4c&H${bgAlpha}${bgColorBGR}&\\shad4`;
+      // Create shadow using \\4c (shadow/background color) and \\shad (shadow distance)
+      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad4`;
     } else {
       tags += `\\shad0`;
     }
@@ -155,7 +155,17 @@ function createWordTag(
     const outlineColorBGR = hexToBGR(style.outlineColor);
     
     let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${textColorBGR}&`;
-    tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}\\shad0`;
+    tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}`;
+    
+    // Add normal text shadow if specified
+    if (style.shadowOpacity > 0) {
+      const shadowColorBGR = hexToBGR(style.shadowColor);
+      const shadowAlpha = opacityToAlpha(style.shadowOpacity);
+      
+      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad2`;
+    } else {
+      tags += `\\shad0`;
+    }
     
     return `{${tags}}${text}{\\r}`;
   }

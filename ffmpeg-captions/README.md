@@ -109,8 +109,10 @@ Details of a specific preset with customizable parameters.
       "positionOffset": 300,
       "backgroundColor": "000000",
       "backgroundOpacity": 0,
-      "activeWordBackgroundColor": "FF6B35",
-      "activeWordBackgroundOpacity": 80
+      "shadowColor": "000000",
+      "shadowOpacity": 0,
+      "activeWordShadowColor": "FF6B35",
+      "activeWordShadowOpacity": 80
     },
     "customizable": [
       {
@@ -150,14 +152,26 @@ Details of a specific preset with customizable parameters.
         "max": 200
       },
       {
-        "key": "activeWordBackgroundColor",
+        "key": "shadowColor",
         "type": "color",
-        "label": "Active Word Background Color"
+        "label": "Shadow Color"
       },
       {
-        "key": "activeWordBackgroundOpacity",
+        "key": "shadowOpacity",
         "type": "number",
-        "label": "Active Word Background Opacity (%)",
+        "label": "Shadow Opacity (%)",
+        "min": 0,
+        "max": 100
+      },
+      {
+        "key": "activeWordShadowColor",
+        "type": "color",
+        "label": "Active Word Shadow Color"
+      },
+      {
+        "key": "activeWordShadowOpacity",
+        "type": "number",
+        "label": "Active Word Shadow Opacity (%)",
         "min": 0,
         "max": 100
       }
@@ -263,8 +277,8 @@ Generates a video with embedded captions.
     "fontSize": 90,
     "fontWeight": 800,
     "activeWordColor": "FF0000",
-    "activeWordBackgroundColor": "FFFF00",
-    "activeWordBackgroundOpacity": 70
+    "activeWordShadowColor": "FFFF00",
+    "activeWordShadowOpacity": 70
   },
   "transcriptionData": {
     "success": true,

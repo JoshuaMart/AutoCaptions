@@ -18,8 +18,10 @@
     "positionOffset": 300,
     "backgroundColor": "000000",
     "backgroundOpacity": 0,
-    "activeWordBackgroundColor": "FF6B35",
-    "activeWordBackgroundOpacity": 80
+    "shadowColor": "000000",
+    "shadowOpacity": 0,
+    "activeWordShadowColor": "FF6B35",
+    "activeWordShadowOpacity": 80
   },
   "customizable": [
     {
@@ -113,14 +115,26 @@
       "max": 100
     },
     {
-      "key": "activeWordBackgroundColor",
+      "key": "shadowColor",
       "type": "color",
-      "label": "Active Word Background Color"
+      "label": "Shadow Color"
     },
     {
-      "key": "activeWordBackgroundOpacity",
+      "key": "shadowOpacity",
       "type": "number",
-      "label": "Active Word Background Opacity (%)",
+      "label": "Shadow Opacity (%)",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "key": "activeWordShadowColor",
+      "type": "color",
+      "label": "Active Word Shadow Color"
+    },
+    {
+      "key": "activeWordShadowOpacity",
+      "type": "number",
+      "label": "Active Word Shadow Opacity (%)",
       "min": 0,
       "max": 100
     }
