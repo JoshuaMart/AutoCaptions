@@ -25,7 +25,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req, res, next): void => {
   logger.info(`${req.method} ${req.path} - ${req.ip}`);
   next();
 });
@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 app.use("/api/captions", captionsRouter);
 
 // Root endpoint
-app.get("/", (req, res) => {
+app.get("/", (req, res): void => {
   res.json({
     message: "FFmpeg Captions Service",
     version: "1.0.0",
@@ -48,7 +48,7 @@ app.get("/", (req, res) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use("*", (req, res): void => {
   res.status(404).json({
     success: false,
     error: "Endpoint not found",
@@ -56,7 +56,7 @@ app.use("*", (req, res) => {
 });
 
 // Error handling middleware (must be last)
-app.use(errorHandler);
+app.use(errorHandler as any);
 
 // Start server
 const startServer = () => {

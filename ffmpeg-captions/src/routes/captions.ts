@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { presetService } from '../services/presetService';
 import { fontService } from '../services/fontService';
 import { captionService } from '../services/captionService';
@@ -10,7 +10,7 @@ import fs from 'fs';
 const router = Router();
 
 // GET /presets - List all available presets
-router.get('/presets', (req: Request, res: Response) => {
+router.get('/presets', (req: Request, res: Response): void => {
   try {
     const presets = presetService.getAllPresets();
     res.json({
@@ -31,16 +31,17 @@ router.get('/presets', (req: Request, res: Response) => {
 });
 
 // GET /presets/:name - Get specific preset details
-router.get('/presets/:name', (req: Request, res: Response) => {
+router.get('/presets/:name', (req: Request, res: Response): void => {
   try {
     const { name } = req.params;
     const preset = presetService.getPreset(name);
     
     if (!preset) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: `Preset '${name}' not found`
       });
+      return;
     }
     
     res.json({
@@ -57,7 +58,7 @@ router.get('/presets/:name', (req: Request, res: Response) => {
 });
 
 // GET /fonts - List all available fonts
-router.get('/fonts', (req: Request, res: Response) => {
+router.get('/fonts', (req: Request, res: Response): void => {
   try {
     const { category } = req.query;
     
@@ -85,17 +86,18 @@ router.get('/fonts', (req: Request, res: Response) => {
 });
 
 // POST /generate - Generate captions video
-router.post('/generate', upload.single('video'), async (req: Request, res: Response) => {
+router.post('/generate', upload.single('video'), async (req: Request, res: Response): Promise<void> => {
   let videoPath: string | null = null;
   let outputPath: string | null = null;
   
   try {
     // Check if file was uploaded
     if (!req.file) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Video file is required'
       });
+      return;
     }
     
     videoPath = req.file.path;
@@ -103,10 +105,11 @@ router.post('/generate', upload.single('video'), async (req: Request, res: Respo
     // Validate video format
     const validation = validateVideoFormat(videoPath);
     if (!validation.isValid) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: validation.error
       });
+      return;
     }
     
     // Parse request body
@@ -116,19 +119,21 @@ router.post('/generate', upload.single('video'), async (req: Request, res: Respo
         ? JSON.parse(req.body.data) 
         : req.body;
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid JSON in request body'
       });
+      return;
     }
     
     // Validate request
     const requestValidation = captionService.validateRequest(requestData);
     if (!requestValidation.isValid) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: requestValidation.error
       });
+      return;
     }
     
     logger.info(`Processing caption generation request for file: ${req.file.originalname}`);
@@ -137,7 +142,8 @@ router.post('/generate', upload.single('video'), async (req: Request, res: Respo
     const result = await captionService.generateCaptionsVideo(videoPath, requestData);
     
     if (!result.success) {
-      return res.status(400).json(result);
+      res.status(400).json(result);
+      return;
     }
     
     outputPath = result.videoPath!;
@@ -194,7 +200,7 @@ router.post('/generate', upload.single('video'), async (req: Request, res: Respo
 });
 
 // Health check endpoint
-router.get('/health', (req: Request, res: Response) => {
+router.get('/health', (req: Request, res: Response): void => {
   res.json({
     success: true,
     message: 'FFmpeg Captions Service is running',
