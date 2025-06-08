@@ -99,7 +99,7 @@ export class WhisperCppService {
         whisperPath: this.whisperPath,
         whisperCppVersion: config.transcription.whisperCppVersion,
         inputPath: audioPath,
-        tokenLevelTimestamps: options.tokenLevelTimestamps ?? true,
+        tokenLevelTimestamps: true, // Always true for toCaptions compatibility
         language: options.language as Language | null | undefined,
         translateToEnglish: options.translateToEnglish,
       });
@@ -109,6 +109,7 @@ export class WhisperCppService {
       );
 
       // Convert to captions format using the new toCaptions function
+      // whisperCppOutput is guaranteed to be TranscriptionJson<true> since tokenLevelTimestamps is true
       const { captions } = toCaptions({
         whisperCppOutput,
       });
@@ -126,8 +127,8 @@ export class WhisperCppService {
           text: caption.text,
           startMs: caption.startMs,
           endMs: caption.endMs,
-          timestampMs: caption.timestampMs,
-          confidence: caption.confidence || undefined,
+          timestampMs: caption.timestampMs ?? undefined,
+          confidence: caption.confidence ?? undefined,
         })),
         duration,
         language: options.language || "auto",

@@ -26,6 +26,7 @@ export interface Caption {
   text: string;
   startMs: number;
   endMs: number;
+  timestampMs?: number;
   confidence?: number;
 }
 
@@ -40,7 +41,6 @@ export interface WhisperCppOptions {
   model?: string;
   language?: string;
   translateToEnglish?: boolean;
-  tokenLevelTimestamps?: boolean;
   combineTokensWithinMilliseconds?: number;
 }
 

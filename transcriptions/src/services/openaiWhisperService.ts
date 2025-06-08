@@ -52,7 +52,7 @@ export class OpenAIWhisperService {
           text: caption.text,
           startMs: caption.startMs,
           endMs: caption.endMs,
-          timestampMs: caption.timestampMs,
+          timestampMs: caption.timestampMs ?? undefined,
           confidence: caption.confidence ?? undefined,
         })),
         duration: transcription.duration,
