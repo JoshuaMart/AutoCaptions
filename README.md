@@ -1,1 +1,1 @@
-![Auto Captions](https://github.com/user-attachments/assets/978f79ab-fba1-4652-b38b-a09ff2e7e4dc)
+![Auto Captions](https://github.com/user-attachments/assets/68e17f05-8b26-4b19-9ae0-2bd719da77aa)
