@@ -4,7 +4,7 @@ import {
   downloadWhisperModel,
   installWhisperCpp,
   transcribe,
-  convertToCaptions,
+  toCaptions,
   WhisperModel,
   Language,
 } from '@remotion/install-whisper-cpp';
@@ -85,7 +85,7 @@ export class WhisperCppService {
     try {
       logger.info('Starting Whisper.cpp transcription', { audioPath, options });
 
-      const { transcription } = await transcribe({
+      const whisperCppOutput = await transcribe({
         model: (options.model || config.transcription.whisperModel) as WhisperModel,
         whisperPath: this.whisperPath,
         whisperCppVersion: config.transcription.whisperCppVersion,
@@ -97,27 +97,27 @@ export class WhisperCppService {
 
       logger.info('Whisper.cpp transcription completed, converting to captions');
 
-      // Convert to captions format
-      const { captions } = convertToCaptions({
-        transcription,
-        combineTokensWithinMilliseconds: options.combineTokensWithinMilliseconds || 200,
+      // Convert to captions format using the new toCaptions function
+      const { captions } = toCaptions({
+        whisperCppOutput,
       });
 
       const processingTime = Date.now() - startTime;
       
-      // Calculate total duration from transcription
-      const duration = transcription.length > 0 
-        ? Math.max(...transcription.map(t => Number(t.timestamps.to))) / 1000 
+      // Calculate total duration from captions
+      const duration = captions.length > 0 
+        ? Math.max(...captions.map(c => c.endMs)) / 1000 
         : 0;
 
       const result: TranscriptionResult = {
         captions: captions.map(caption => ({
           text: caption.text,
-          startInSeconds: (caption as any).startInSeconds || (caption as any).start || (caption as any).from / 1000 || 0,
-          endInSeconds: (caption as any).endInSeconds || (caption as any).end || (caption as any).to / 1000 || 0,
+          startInSeconds: caption.startMs / 1000,
+          endInSeconds: caption.endMs / 1000,
+          confidence: caption.confidence || undefined,
         })),
         duration,
-        language: options.language,
+        language: options.language || 'auto',
         metadata: {
           service: 'whisper-cpp',
           model: options.model || config.transcription.whisperModel,
