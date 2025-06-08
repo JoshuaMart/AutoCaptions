@@ -1,4 +1,5 @@
 import {
+  Caption,
   GenerateCaptionsRequest,
   GenerateCaptionsResponse,
   GeneratePreviewResponse,
@@ -48,6 +49,7 @@ export class CaptionService {
 
       case "end":
         // Find last caption that has a reasonable duration
+        targetIndex = captions.length - 1;
         for (let i = captions.length - 1; i >= 0; i--) {
           const cap = captions[i];
           const duration = (cap.endMs || cap.startMs + 0.5) - cap.startMs;
@@ -56,7 +58,6 @@ export class CaptionService {
             break;
           }
         }
-        if (targetIndex === undefined) targetIndex = captions.length - 1;
         reason = "Last caption with good duration";
         break;
 
