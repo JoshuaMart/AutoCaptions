@@ -12,19 +12,19 @@ function secToASS(sec: number): string {
 
 function calculateEndTime(captions: Caption[], currentIndex: number): number {
   const caption = captions[currentIndex];
-  
-  // If endInSeconds is defined and valid, use it
-  if (caption.endInSeconds !== undefined && caption.endInSeconds > caption.startInSeconds) {
-    return caption.endInSeconds;
+
+  // If endMs is defined and valid, use it
+  if (caption.endMs !== undefined && caption.endMs > caption.startMs) {
+    return caption.endMs;
   }
 
   // Otherwise, use the beginning of the following word
   if (currentIndex < captions.length - 1) {
-    return captions[currentIndex + 1].startInSeconds;
+    return captions[currentIndex + 1].startMs;
   }
 
   // For the last word, add a default duration
-  return caption.startInSeconds + 0.5;
+  return caption.startMs + 0.5;
 }
 
 function groupWordsByTime(
@@ -40,17 +40,17 @@ function groupWordsByTime(
     const endTime = calculateEndTime(captions, i);
 
     if (currentGroup.length === 0) {
-      groupStart = caption.startInSeconds;
-      currentGroup.push({ ...caption, endInSeconds: endTime });
+      groupStart = caption.startMs;
+      currentGroup.push({ ...caption, endMs: endTime });
     } else {
       const groupDuration = (endTime - groupStart!) * 1000;
 
       if (groupDuration >= minMs) {
         groups.push([...currentGroup]);
-        currentGroup = [{ ...caption, endInSeconds: endTime }];
-        groupStart = caption.startInSeconds;
+        currentGroup = [{ ...caption, endMs: endTime }];
+        groupStart = caption.startMs;
       } else {
-        currentGroup.push({ ...caption, endInSeconds: endTime });
+        currentGroup.push({ ...caption, endMs: endTime });
       }
     }
   }
@@ -126,49 +126,49 @@ function createWordTag(
   adjustedFontSize: number,
 ): string {
   const text = style.uppercase ? word.text.toUpperCase() : word.text;
-  
+
   if (isActive) {
     // Active word styling
     const activeColorBGR = hexToBGR(style.activeWordColor);
     const activeOutlineBGR = hexToBGR(style.activeWordOutlineColor);
-    
+
     // Use active word font size (also scale it to resolution)
     const scaleFactor = adjustedFontSize / style.fontSize;
     const activeWordSize = Math.round(style.activeWordFontSize * scaleFactor);
-    
+
     let tags = `\\fs${activeWordSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
     tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
-    
+
     // Add active word shadow if specified
     if (style.activeWordShadowOpacity > 0) {
       const shadowColorBGR = hexToBGR(style.activeWordShadowColor);
       const shadowAlpha = opacityToAlpha(style.activeWordShadowOpacity);
-      
+
       // Create shadow using \\4c (shadow/background color) and \\shad (shadow distance)
       tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad4`;
     } else {
       tags += `\\shad0`;
     }
-    
+
     return `{${tags}}${text}{\\r}`;
   } else {
     // Normal word styling
     const textColorBGR = hexToBGR(style.textColor);
     const outlineColorBGR = hexToBGR(style.outlineColor);
-    
+
     let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${textColorBGR}&`;
     tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}`;
-    
+
     // Add normal text shadow if specified
     if (style.shadowOpacity > 0) {
       const shadowColorBGR = hexToBGR(style.shadowColor);
       const shadowAlpha = opacityToAlpha(style.shadowOpacity);
-      
+
       tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad2`;
     } else {
       tags += `\\shad0`;
     }
-    
+
     return `{${tags}}${text}{\\r}`;
   }
 }
@@ -192,7 +192,7 @@ export function generateASS(
 
     // Determine if we need line background
     const hasLineBackground = style.backgroundOpacity > 0;
-    
+
     // Colors in BGR format
     const textColorBGR = hexToBGR(style.textColor);
     const outlineColorBGR = hexToBGR(style.outlineColor);
@@ -201,9 +201,11 @@ export function generateASS(
 
     // BorderStyle: 4 for box background, 1 for normal outline
     const borderStyle = hasLineBackground ? 4 : 1;
-    
+
     // For BorderStyle=4, the background is controlled by BackColour
-    const backColour = hasLineBackground ? `&H${backgroundAlpha}${backgroundColorBGR}&` : "&H0&";
+    const backColour = hasLineBackground
+      ? `&H${backgroundAlpha}${backgroundColorBGR}&`
+      : "&H0&";
 
     let ass = `[Script Info]
 ScriptType: v4.00+
@@ -220,29 +222,35 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     const wordGroups = groupWordsByTime(captions);
 
-    logger.info(`Generated ${wordGroups.length} word groups for ASS generation`);
-    
+    logger.info(
+      `Generated ${wordGroups.length} word groups for ASS generation`,
+    );
+
     for (let groupIdx = 0; groupIdx < wordGroups.length; groupIdx++) {
       const group = wordGroups[groupIdx];
-      logger.info(`Group ${groupIdx}: ${group.length} words from ${group[0].startInSeconds}s to ${group[group.length-1].endInSeconds}s`);
+      logger.info(
+        `Group ${groupIdx}: ${group.length} words from ${group[0].startMs}s to ${group[group.length - 1].endMs}s`,
+      );
 
       for (let wordIdx = 0; wordIdx < group.length; wordIdx++) {
         const currentWord = group[wordIdx];
-        const start = secToASS(currentWord.startInSeconds);
-        const end = secToASS(currentWord.endInSeconds);
+        const start = secToASS(currentWord.startMs);
+        const end = secToASS(currentWord.endMs);
 
         const line = group
-          .map((word, idx) => createWordTag(
-            word,
-            style,
-            idx === wordIdx, // isActive
-            adjustedFontSize
-          ))
+          .map((word, idx) =>
+            createWordTag(
+              word,
+              style,
+              idx === wordIdx, // isActive
+              adjustedFontSize,
+            ),
+          )
           .join(" ");
 
         const dialogue = `Dialogue: 0,${start},${end},Default,,0,0,0,,${line}`;
         ass += dialogue + "\n";
-        
+
         // Log first few dialogues for debugging
         if (groupIdx === 0 && wordIdx < 3) {
           logger.info(`Dialogue ${wordIdx}: ${dialogue}`);

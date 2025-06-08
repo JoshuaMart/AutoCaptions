@@ -24,8 +24,8 @@ export interface TranscriptionResult {
 
 export interface Caption {
   text: string;
-  startInSeconds: number;
-  endInSeconds: number;
+  startMs: number;
+  endMs: number;
   confidence?: number;
 }
 

@@ -286,13 +286,13 @@ Generates a video with embedded captions.
       "captions": [
         {
           "text": "Hello",
-          "startInSeconds": 0.12,
-          "endInSeconds": 0.8
+          "startMs": 0.12,
+          "endMs": 0.8
         },
         {
           "text": "world",
-          "startInSeconds": 0.8,
-          "endInSeconds": 1.0
+          "startMs": 0.8,
+          "endMs": 1.0
         }
       ],
       "duration": 10.5,
@@ -454,21 +454,21 @@ curl http://localhost:3002/api/captions/presets
 # Generate captions
 curl -X POST \
   -F "video=@video.mp4" \
-  -F "data={\"preset\":\"simple\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
+  -F "data={\"preset\":\"simple\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startMs\":0.5,\"endMs\":1.0}]}}}" \
   http://localhost:3002/api/captions/generate \
   --output result.mp4
 
 # Generate preview frame (auto-select optimal timestamp)
 curl -X POST \
   -F "video=@video.mp4" \
-  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
+  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startMs\":0.5,\"endMs\":1.0}]}}}" \
   http://localhost:3002/api/captions/preview \
   --output preview.png
 
 # Generate preview frame at 2.5 seconds
 curl -X POST \
   -F "video=@video.mp4" \
-  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startInSeconds\":0.5,\"endInSeconds\":1.0}]}}}" \
+  -F "data={\"preset\":\"custom\",\"transcriptionData\":{\"success\":true,\"transcription\":{\"captions\":[{\"text\":\"Hello\",\"startMs\":0.5,\"endMs\":1.0}]}}}" \
   "http://localhost:3002/api/captions/preview?timestamp=2.5" \
   --output preview.png
 ```

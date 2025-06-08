@@ -1,7 +1,7 @@
 export interface Caption {
   text: string;
-  startInSeconds: number;
-  endInSeconds: number;
+  startMs: number;
+  endMs: number;
   confidence?: number;
 }
 
@@ -99,7 +99,7 @@ export interface GoogleFont {
 export interface FontVariant {
   name: string;
   weight: number;
-  style: 'normal' | 'italic';
+  style: "normal" | "italic";
 }
 
 export interface VideoResolution {

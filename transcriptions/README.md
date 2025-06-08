@@ -87,8 +87,8 @@ Transcribes an uploaded audio or video file.
     "captions": [
       {
         "text": "Hello world",
-        "startInSeconds": 0.0,
-        "endInSeconds": 1.5,
+        "startMs": 0.0,
+        "endMs": 1.5,
         "confidence": 0.95
       }
     ],
