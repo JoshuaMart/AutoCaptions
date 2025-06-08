@@ -121,6 +121,12 @@ export class PresetService {
             errors.push(`Parameter '${key}' must be a boolean`);
           }
           break;
+        case 'font':
+          // Font validation could be added here
+          if (typeof value !== 'string') {
+            errors.push(`Parameter '${key}' must be a string`);
+          }
+          break;
       }
     }
 

@@ -127,6 +127,34 @@ export function generateASS(
     );
     const adjustedFontSize = Math.round(style.fontSize * scaleFactor);
 
+    // For ASS, if you want a custom background, you must use BorderStyle 3
+    // and adjust the outline color so that it serves as the background.
+    const hasCustomBackground =
+      style.backgroundColor &&
+      style.backgroundOpacity !== undefined &&
+      style.backgroundOpacity > 0;
+
+    // Calculate color and alpha for background
+    let backgroundColorBGR = "000000";
+    let backgroundAlpha = "FF";
+
+    if (hasCustomBackground) {
+      backgroundColorBGR = hexToBGR(style.backgroundColor!);
+      // Convertir l'opacité (0-100) en ASS alpha (00-FF)
+      // 100% d'opacité = 00 (opaque), 0% d'opacité = FF (transparent)
+      backgroundAlpha = Math.round((100 - style.backgroundOpacity!) * 2.55)
+        .toString(16)
+        .padStart(2, "0")
+        .toUpperCase();
+    }
+
+    // BorderStyle: 4 if custom background (box background), 1 otherwise
+    const borderStyle = hasCustomBackground ? 4 : 1;
+
+    // For BorderStyle=4, the background color is controlled by Shadow
+    const shadowColor = hasCustomBackground ? backgroundColorBGR : "000000";
+    const shadowAlpha = hasCustomBackground ? backgroundAlpha : "FF";
+
     let ass = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${resolution.width}
@@ -134,7 +162,7 @@ PlayResY: ${resolution.height}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${style.fontFamily},${adjustedFontSize},&H${hexToBGR(style.textColor)},&H0,&H${hexToBGR(style.outlineColor)},&H0,${style.bold ? 1 : 0},${style.italic ? 1 : 0},0,0,100,100,0,0,1,${style.outlineWidth},0,${alignment},${margins.marginL},${margins.marginR},${margins.marginV},1
+Style: Default,${style.fontFamily},${adjustedFontSize},&H${hexToBGR(style.textColor)},&H0,&H${hexToBGR(style.outlineColor)},&H${shadowAlpha}${shadowColor}&,${style.bold ? 1 : 0},${style.italic ? 1 : 0},0,0,100,100,0,0,${borderStyle},${style.outlineWidth},0,${alignment},${margins.marginL},${margins.marginR},${margins.marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -155,15 +183,28 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             const text = style.uppercase ? word.text.toUpperCase() : word.text;
 
             if (idx === wordIdx) {
-              // Current word: special color and border
+              // Current word: special color
               const activeColorBGR = hexToBGR(style.activeWordColor);
-              const outlineColorBGR = hexToBGR(style.outlineColor);
-              return `{\\bord${style.activeWordOutlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${activeColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
+
+              if (hasCustomBackground) {
+                // With background: use default style (BorderStyle=4)
+                return `{\\1c&H${activeColorBGR}&}${text}{\\r}`;
+              } else {
+                // No background: normal style with border
+                const outlineColorBGR = hexToBGR(style.outlineColor);
+                return `{\\bord${style.activeWordOutlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${activeColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
+              }
             } else {
               // Other words: normal style
-              const textColorBGR = hexToBGR(style.textColor);
-              const outlineColorBGR = hexToBGR(style.outlineColor);
-              return `{\\bord${style.outlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${textColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
+              if (hasCustomBackground) {
+                // With background: use default style
+                return text;
+              } else {
+                // No background: normal style with border
+                const textColorBGR = hexToBGR(style.textColor);
+                const outlineColorBGR = hexToBGR(style.outlineColor);
+                return `{\\bord${style.outlineWidth}\\shad0\\fs${adjustedFontSize}\\b${style.bold ? 1 : 0}\\1c&H${textColorBGR}&\\3c&H${outlineColorBGR}&}${text}{\\r}`;
+              }
             }
           })
           .join(" ");
