@@ -23,8 +23,8 @@ function calculateEndTime(captions: Caption[], currentIndex: number): number {
     return captions[currentIndex + 1].startMs;
   }
 
-  // For the last word, add a default duration
-  return caption.startMs + 0.5;
+  // For the last word, add a default duration (500ms)
+  return caption.startMs + 500;
 }
 
 function groupWordsByTime(
@@ -43,7 +43,7 @@ function groupWordsByTime(
       groupStart = caption.startMs;
       currentGroup.push({ ...caption, endMs: endTime });
     } else {
-      const groupDuration = (endTime - groupStart!) * 1000;
+      const groupDuration = endTime - groupStart!;
 
       if (groupDuration >= minMs) {
         groups.push([...currentGroup]);
@@ -229,13 +229,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     for (let groupIdx = 0; groupIdx < wordGroups.length; groupIdx++) {
       const group = wordGroups[groupIdx];
       logger.info(
-        `Group ${groupIdx}: ${group.length} words from ${group[0].startMs}s to ${group[group.length - 1].endMs}s`,
+        `Group ${groupIdx}: ${group.length} words from ${group[0].startMs}ms to ${group[group.length - 1].endMs}ms`,
       );
 
       for (let wordIdx = 0; wordIdx < group.length; wordIdx++) {
         const currentWord = group[wordIdx];
-        const start = secToASS(currentWord.startMs);
-        const end = secToASS(currentWord.endMs);
+        const start = secToASS(currentWord.startMs / 1000); // Convert ms to seconds
+        const end = secToASS(currentWord.endMs / 1000); // Convert ms to seconds
 
         const line = group
           .map((word, idx) =>
