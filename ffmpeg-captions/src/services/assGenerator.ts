@@ -128,9 +128,13 @@ function createWordTag(
   if (isActive) {
     // Active word styling
     const activeColorBGR = hexToBGR(style.activeWordColor);
-    const activeOutlineBGR = hexToBGR(style.outlineColor);
+    const activeOutlineBGR = hexToBGR(style.activeWordOutlineColor);
     
-    let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
+    // Use active word font size (also scale it to resolution)
+    const scaleFactor = adjustedFontSize / style.fontSize;
+    const activeWordSize = Math.round(style.activeWordFontSize * scaleFactor);
+    
+    let tags = `\\fs${activeWordSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
     tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
     
     // Add active word background if specified

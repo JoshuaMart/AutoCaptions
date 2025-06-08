@@ -98,7 +98,9 @@ Details of a specific preset with customizable parameters.
       "outlineColor": "000000",
       "outlineWidth": 4,
       "activeWordColor": "FFFF00",
+      "activeWordOutlineColor": "000000",
       "activeWordOutlineWidth": 4,
+      "activeWordFontSize": 85,
       "position": "center",
       "positionOffset": 300,
       "backgroundColor": "000000",
@@ -125,6 +127,23 @@ Details of a specific preset with customizable parameters.
         "label": "Font Weight",
         "min": 100,
         "max": 900
+      },
+      {
+        "key": "activeWordColor",
+        "type": "color",
+        "label": "Active Word Color"
+      },
+      {
+        "key": "activeWordOutlineColor",
+        "type": "color",
+        "label": "Active Word Outline Color"
+      },
+      {
+        "key": "activeWordFontSize",
+        "type": "number",
+        "label": "Active Word Font Size",
+        "min": 40,
+        "max": 200
       },
       {
         "key": "activeWordBackgroundColor",

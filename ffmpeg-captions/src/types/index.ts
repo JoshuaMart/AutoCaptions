@@ -29,7 +29,9 @@ export interface CaptionStyle {
   outlineColor: string; // hex without #
   outlineWidth: number;
   activeWordColor: string; // hex without #
+  activeWordOutlineColor: string; // hex without #
   activeWordOutlineWidth: number;
+  activeWordFontSize: number;
   position: "top" | "center" | "bottom";
   positionOffset: number; // vertical offset in pixels (+ down, - up)
   backgroundColor: string; // hex without #

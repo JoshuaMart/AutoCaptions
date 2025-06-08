@@ -11,7 +11,9 @@
     "outlineColor": "000000",
     "outlineWidth": 4,
     "activeWordColor": "FFFF00",
+    "activeWordOutlineColor": "000000",
     "activeWordOutlineWidth": 4,
+    "activeWordFontSize": 85,
     "position": "center",
     "positionOffset": 300,
     "backgroundColor": "000000",
@@ -67,11 +69,23 @@
       "label": "Active Word Color"
     },
     {
+      "key": "activeWordOutlineColor",
+      "type": "color",
+      "label": "Active Word Outline Color"
+    },
+    {
       "key": "activeWordOutlineWidth",
       "type": "number",
       "label": "Active Word Outline Width",
       "min": 0,
       "max": 20
+    },
+    {
+      "key": "activeWordFontSize",
+      "type": "number",
+      "label": "Active Word Font Size",
+      "min": 40,
+      "max": 200
     },
     {
       "key": "position",
