@@ -16,6 +16,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
+app.get('/', (req, res) => renderController.getServiceInfo(req, res));
 app.get('/health', (req, res) => renderController.healthCheck(req, res));
 
 app.post('/render', 
@@ -31,6 +32,12 @@ app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found',
+    availableEndpoints: {
+      "info": "GET /",
+      "render": "POST /render",
+      "download": "GET /download/:uploadId",
+      "health": "GET /health"
+    }
   });
 });
 

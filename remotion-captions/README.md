@@ -32,6 +32,26 @@ npm run dev
 
 ## 📡 API Endpoints
 
+### `GET /`
+
+Get service information and available endpoints.
+
+**Response:**
+```json
+{
+  "name": "Remotion Captions Service API",
+  "version": "1.0.0",
+  "description": "REST API for generating captioned videos with Remotion",
+  "status": "running",
+  "timestamp": "2025-06-09T10:00:00.000Z",
+  "endpoints": {
+    "render": "POST /render",
+    "download": "GET /download/:uploadId",
+    "health": "GET /health"
+  }
+}
+```
+
 ### `POST /render`
 
 Render a video with captions.

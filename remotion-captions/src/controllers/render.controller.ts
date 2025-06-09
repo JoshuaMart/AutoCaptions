@@ -190,6 +190,26 @@ export class RenderController {
   }
 
   /**
+   * Service information endpoint
+   */
+  async getServiceInfo(req: Request, res: Response): Promise<void> {
+    const packageJson = require('../../package.json');
+    
+    res.json({
+      name: "Remotion Captions Service API",
+      version: packageJson.version,
+      description: packageJson.description,
+      status: "running",
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        "render": "POST /render",
+        "download": "GET /download/:uploadId",
+        "health": "GET /health"
+      }
+    });
+  }
+
+  /**
    * Health check endpoint
    */
   async healthCheck(req: Request, res: Response): Promise<void> {
