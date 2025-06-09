@@ -6,12 +6,11 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { fitText } from "@remotion/layout-utils";
 import { makeTransform, scale, translateY } from "@remotion/animation-utils";
 import { TikTokPage } from "@remotion/captions";
 import { CaptionStyle } from "./index";
 
-const DESIRED_FONT_SIZE = 120;
+const DEFAULT_FONT_SIZE = 80;
 
 export const CaptionPage: React.FC<{
   readonly page: TikTokPage;
@@ -31,14 +30,9 @@ export const CaptionPage: React.FC<{
     durationInFrames: 5,
   });
 
-  const fittedText = fitText({
-    fontFamily: fontFamily,
-    text: page.text,
-    withinWidth: width * captionStyle.maxWidth,
-    textTransform: "uppercase",
-  });
-
-  const fontSize = Math.min(DESIRED_FONT_SIZE, fittedText.fontSize);
+  // Use fixed fontSize if provided, otherwise use default
+  const fontSize = captionStyle.fontSize ?? DEFAULT_FONT_SIZE;
+  const maxWidth = width * captionStyle.maxWidth;
 
   // Calculate position based on textPosition and offset
   const getPositionStyles = (): React.CSSProperties => {
@@ -91,6 +85,9 @@ export const CaptionPage: React.FC<{
           letterSpacing: "1px",
           lineHeight: "1.2",
           textAlign: "center",
+          maxWidth: maxWidth,
+          wordWrap: "break-word",
+          overflowWrap: "break-word",
         }}
       >
         <span
@@ -99,6 +96,7 @@ export const CaptionPage: React.FC<{
               scale(interpolate(enterProgress, [0, 1], [0.8, 1])),
               translateY(interpolate(enterProgress, [0, 1], [50, 0])),
             ]),
+            display: "inline",
           }}
         >
           {page.tokens.map((token, tokenIndex) => {
@@ -139,7 +137,7 @@ export const CaptionPage: React.FC<{
                 key={token.fromMs}
                 style={{
                   display: "inline-block",
-                  whiteSpace: "pre",
+                  whiteSpace: "pre-wrap",
                   color: isActive 
                     ? (hasBackground ? "white" : captionStyle.activeWordColor) 
                     : captionStyle.textColor,

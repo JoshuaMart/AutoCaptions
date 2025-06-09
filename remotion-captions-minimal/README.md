@@ -54,7 +54,8 @@ npx remotion render CaptionedVideo output.mp4 --props=./props.json
     "activeWordBackgroundColor": "#FF5700",
     "activeWordBackgroundOpacity": 1,
     "activeWordBorderRadius": 6,
-    "wordPadding": 8
+    "wordPadding": 8,
+    "fontSize": 80
   }
 }
 ```

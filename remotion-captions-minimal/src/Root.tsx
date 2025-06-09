@@ -32,6 +32,7 @@ export const RemotionRoot: React.FC = () => {
           activeWordBackgroundOpacity: 1,
           activeWordBorderRadius: 6,
           wordPadding: 8,
+          fontSize: 80,
         },
       }}
     />
