@@ -101,7 +101,7 @@ export const CaptionPage: React.FC<{
             ]),
           }}
         >
-          {page.tokens.map((token) => {
+          {page.tokens.map((token, tokenIndex) => {
             const startRelativeToSequence = token.fromMs - page.startMs;
             const endRelativeToSequence = token.toMs - page.startMs;
 
@@ -124,13 +124,21 @@ export const CaptionPage: React.FC<{
             const hasBackground = isActive && captionStyle.activeWordBackgroundColor;
             const backgroundOpacity = captionStyle.activeWordBackgroundOpacity ?? 1;
             const borderRadius = captionStyle.activeWordBorderRadius ?? 6;
-            const padding = captionStyle.activeWordPadding ?? 8;
+            const padding = captionStyle.wordPadding ?? 8;
+            
+            // Apply consistent spacing and padding to all words when background system is active
+            const needsGlobalPadding = !!captionStyle.activeWordBackgroundColor;
+            const wordSpacing = needsGlobalPadding ? Math.max(2, padding / 4) : 0;
+            
+            // Check if this token starts with a space (natural spacing)
+            const startsWithSpace = token.text.startsWith(' ');
+            const isFirstToken = tokenIndex === 0;
 
             return (
               <span
                 key={token.fromMs}
                 style={{
-                  display: "inline",
+                  display: "inline-block",
                   whiteSpace: "pre",
                   color: isActive 
                     ? (hasBackground ? "white" : captionStyle.activeWordColor) 
@@ -138,25 +146,23 @@ export const CaptionPage: React.FC<{
                   fontWeight: isActive ? "800" : "700",
                   textTransform: "uppercase",
                   position: "relative",
+                  // Apply consistent spacing to all words when background system is active
+                  marginLeft: (needsGlobalPadding && !isFirstToken && !startsWithSpace) ? `${wordSpacing}px` : undefined,
+                  marginRight: needsGlobalPadding ? `${wordSpacing}px` : undefined,
+                  // Apply consistent padding to all words, background only on active
+                  paddingLeft: needsGlobalPadding ? `${padding}px` : undefined,
+                  paddingRight: needsGlobalPadding ? `${padding}px` : undefined,
+                  paddingTop: needsGlobalPadding ? `${padding * 0.6}px` : undefined,
+                  paddingBottom: needsGlobalPadding ? `${padding * 0.6}px` : undefined,
+                  borderRadius: needsGlobalPadding ? `${borderRadius}px` : undefined,
+                  // Background only on active word
+                  ...(hasBackground && {
+                    backgroundColor: captionStyle.activeWordBackgroundColor.startsWith('#') 
+                      ? hexToRgba(captionStyle.activeWordBackgroundColor, backgroundOpacity)
+                      : captionStyle.activeWordBackgroundColor,
+                  }),
                 }}
               >
-                {hasBackground && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      backgroundColor: captionStyle.activeWordBackgroundColor.startsWith('#') 
-                        ? hexToRgba(captionStyle.activeWordBackgroundColor, backgroundOpacity)
-                        : captionStyle.activeWordBackgroundColor,
-                      borderRadius: `${borderRadius}px`,
-                      width: `calc(100% + ${padding * 2}px)`,
-                      height: `calc(100% + ${padding}px)`,
-                      zIndex: -1,
-                    }}
-                  />
-                )}
                 {token.text}
               </span>
             );

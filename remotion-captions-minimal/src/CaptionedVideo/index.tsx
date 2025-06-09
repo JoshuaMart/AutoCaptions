@@ -56,7 +56,7 @@ export interface CaptionStyle {
   activeWordBackgroundColor?: string;
   activeWordBackgroundOpacity?: number;
   activeWordBorderRadius?: number;
-  activeWordPadding?: number;
+  wordPadding?: number;
 }
 
 export interface FontConfig {
@@ -81,7 +81,7 @@ export const captionedVideoSchema = z.object({
     activeWordBackgroundColor: z.string().optional(),
     activeWordBackgroundOpacity: z.number().min(0).max(1).optional(),
     activeWordBorderRadius: z.number().min(0).optional(),
-    activeWordPadding: z.number().min(0).optional(),
+    wordPadding: z.number().min(0).optional(),
   }),
 });
 
