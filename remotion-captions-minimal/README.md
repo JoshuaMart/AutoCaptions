@@ -1,11 +1,11 @@
 # Remotion Captions - Minimal
 
-A minimal, production-ready Remotion project for generating videos with fully customizable captions and Google Fonts support.
+A minimal, production-ready Remotion project for generating videos with fully customizable captions, flexible positioning, and Google Fonts support.
 
 ## ✨ Features
 
 - ✅ **TikTok-style captions** with word-by-word highlighting
-- ✅ **Centered captions** with configurable width
+- ✅ **Flexible positioning** - top, center, or bottom with custom offsets
 - ✅ **Google Fonts integration** with dynamic loading
 - ✅ **Fully customizable styling** via JSON props
 - ✅ **Minimal codebase** - only essential files
@@ -47,7 +47,9 @@ npx remotion render CaptionedVideo output.mp4 --props=./props.json
     "textColor": "white",
     "strokeColor": "black",
     "strokeWidth": 20,
-    "activeWordColor": "orange"
+    "activeWordColor": "orange",
+    "textPosition": "bottom",
+    "textPositionOffset": 0
   }
 }
 ```
@@ -68,6 +70,23 @@ npx remotion render CaptionedVideo output.mp4 --props=./props.json
 | `strokeColor` | string | Color of text outline/border | `"black"` |
 | `strokeWidth` | number | Width of text outline in pixels | `20` |
 | `activeWordColor` | string | Color of currently active word | `"orange"` |
+| `textPosition` | string | Caption position: `"top"`, `"center"`, `"bottom"` | `"bottom"` |
+| `textPositionOffset` | number | Position offset in pixels (positive/negative) | `0` |
+
+### Text Positioning Examples
+
+```json
+{
+  "captionStyle": {
+    "textPosition": "bottom",
+    "textPositionOffset": -100
+  }
+}
+```
+
+**Common use cases:**
+- **TikTok/Instagram**: `"bottom"` + `textPositionOffset: -100` (avoids UI overlap)
+- **YouTube Shorts**: `"center"` + `textPositionOffset: 0` (centered)
 
 ## 📁 Caption File Format
 
@@ -113,6 +132,12 @@ Create a JSON file with the same name as your video:
 - High contrast: White text + Black stroke
 - Neon effects: Bright text + Dark stroke
 - Brand colors: Match your brand palette
+
+### Positioning
+- Use **negative offsets** to move captions away from UI elements
+- **Center position** works best for landscape videos
+- **Bottom position** is ideal for TikTok/Instagram format
+- Test different offsets to find the perfect placement
 
 ### Sizing
 - `maxWidth: 0.9` (90%) prevents text overflow

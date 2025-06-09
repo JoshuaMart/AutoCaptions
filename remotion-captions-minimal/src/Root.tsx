@@ -26,6 +26,8 @@ export const RemotionRoot: React.FC = () => {
           strokeColor: "black",
           strokeWidth: 20,
           activeWordColor: "orange",
+          textPosition: "bottom",
+          textPositionOffset: 0,
         },
       }}
     />

@@ -40,13 +40,38 @@ export const CaptionPage: React.FC<{
 
   const fontSize = Math.min(DESIRED_FONT_SIZE, fittedText.fontSize);
 
-  const containerStyle: React.CSSProperties = {
-    justifyContent: "center",
-    alignItems: "center",
-    top: undefined,
-    bottom: 350,
-    height: 150,
+  // Calculate position based on textPosition and offset
+  const getPositionStyles = (): React.CSSProperties => {
+    const baseStyles: React.CSSProperties = {
+      justifyContent: "center",
+      alignItems: "center",
+      height: 150,
+    };
+
+    switch (captionStyle.textPosition) {
+      case "top":
+        return {
+          ...baseStyles,
+          top: 100 + captionStyle.textPositionOffset,
+          bottom: undefined,
+        };
+      case "center":
+        return {
+          ...baseStyles,
+          top: `calc(50% - 75px + ${captionStyle.textPositionOffset}px)`,
+          bottom: undefined,
+        };
+      case "bottom":
+      default:
+        return {
+          ...baseStyles,
+          top: undefined,
+          bottom: 350 - captionStyle.textPositionOffset,
+        };
+    }
   };
+
+  const containerStyle = getPositionStyles();
 
   return (
     <AbsoluteFill style={containerStyle}>

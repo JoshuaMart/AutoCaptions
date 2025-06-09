@@ -9,6 +9,8 @@
     "textColor": "white",
     "strokeColor": "black",
     "strokeWidth": 20,
-    "activeWordColor": "orange"
+    "activeWordColor": "orange",
+    "textPosition": "center",
+    "textPositionOffset": 300
   }
 }

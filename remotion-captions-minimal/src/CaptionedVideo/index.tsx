@@ -51,6 +51,8 @@ export interface CaptionStyle {
   strokeColor: string;
   strokeWidth: number;
   activeWordColor: string;
+  textPosition: "top" | "center" | "bottom";
+  textPositionOffset: number;
 }
 
 export interface FontConfig {
@@ -70,6 +72,8 @@ export const captionedVideoSchema = z.object({
     strokeColor: z.string().default("black"),
     strokeWidth: z.number().min(0).default(20),
     activeWordColor: z.string().default("orange"),
+    textPosition: z.enum(["top", "center", "bottom"]).default("bottom"),
+    textPositionOffset: z.number().default(0),
   }),
 });
 
