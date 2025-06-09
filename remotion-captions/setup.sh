@@ -50,6 +50,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "📦 Installing remotion subfolder dependencies..."
+cd remotion && npm install && cd ..
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to install dependencies"
+    exit 1
+fi
+
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
     echo ""
