@@ -49,4 +49,5 @@ COPY . .
 
 ENV REMOTION_CHROME_BINARY /usr/bin/google-chrome-stable
 
-CMD npm run dev
+# Start the application
+CMD ["npm", "start"]
