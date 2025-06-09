@@ -4,7 +4,7 @@ TypeScript REST API for generating video captions using FFmpeg and ASS subtitles
 
 | Before | After |
 |--|--|
-| ![before](https://i.ibb.co/6cStFTyR/before.png | height=750) | ![after](https://i.ibb.co/hxxz1mn4/after.png | height=750) |
+| <img src="https://i.ibb.co/6cStFTyR/before.png" alt="before" height="750">) | <img src="https://i.ibb.co/hxxz1mn4/after.png | height=750" alt="after" height="750"> |
 
 ## Features
 
