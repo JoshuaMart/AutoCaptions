@@ -1,11 +1,11 @@
 #!/bin/bash
 
-echo "🚀 Setting up FFmpeg Captions Service"
+echo "🚀 Starting Remotion Captions API..."
 echo "====================================="
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js 18+ first."
+    echo "❌ Node.js is not installed. Please install Node.js first."
     exit 1
 fi
 
@@ -61,24 +61,6 @@ else
     echo "✅ .env file already exists"
 fi
 
-# Create necessary directories
-echo ""
-echo "📁 Creating directories..."
-mkdir -p uploads logs temp
-echo "✅ Created uploads, logs, and temp directories"
-
-# Compile TypeScript
-echo ""
-echo "🔨 Compiling TypeScript..."
-npm run build
-
-if [ $? -ne 0 ]; then
-    echo "❌ TypeScript compilation failed"
-    exit 1
-fi
-
-echo "✅ TypeScript compilation completed"
-
 echo ""
 echo "🎉 Setup completed successfully!"
 echo ""
@@ -87,4 +69,4 @@ echo "   npm run dev     - Start development server"
 echo "   npm run build   - Build for production"
 echo "   npm start       - Start production server"
 echo ""
-echo "🌐 The service will be available at: http://localhost:3002"
+echo "🌐 The service will be available at: http://localhost:3003"

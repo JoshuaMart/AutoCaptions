@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "🚀 Starting Transcription Service Setup..."
-echo ""
+echo "====================================="
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -9,59 +9,64 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
+echo "✅ Node.js version: $(node --version)"
+
 # Check if npm is installed
 if ! command -v npm &> /dev/null; then
     echo "❌ npm is not installed. Please install npm first."
     exit 1
 fi
 
+echo "✅ npm version: $(npm --version)"
+
 # Check if FFmpeg is installed
 if ! command -v ffmpeg &> /dev/null; then
-    echo "❌ FFmpeg is not installed. Please install FFmpeg first."
-    echo "   On macOS: brew install ffmpeg"
-    echo "   On Ubuntu: sudo apt update && sudo apt install ffmpeg"
-    echo "   On Windows: Download from https://ffmpeg.org/download.html"
+    echo "⚠️  FFmpeg is not installed or not in PATH."
+    echo "    Please install FFmpeg:"
+    echo "     - macOS: brew install ffmpeg"
+    echo "     - Ubuntu: sudo apt install ffmpeg"
+    echo "     - Windows: Download from https://ffmpeg.org/"
     exit 1
 fi
 
-# Check if FFprobe is installed (usually comes with FFmpeg)
+echo "✅ FFmpeg version: $(ffmpeg -version | head -n 1)"
+
+# Check if FFprobe is installed
 if ! command -v ffprobe &> /dev/null; then
-    echo "❌ FFprobe is not installed. Please install FFmpeg (includes FFprobe)."
+    echo "⚠️  FFprobe is not installed or not in PATH."
+    echo "   FFprobe usually comes with FFmpeg installation."
     exit 1
 fi
 
-echo "✅ FFmpeg and FFprobe are available"
+echo "✅ FFprobe is available"
 
-# Remove old dependencies and install new ones
-echo "📦 Installing updated dependencies..."
+# Install dependencies
+echo ""
+echo "📦 Installing dependencies..."
 npm install
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to install dependencies"
+    exit 1
+fi
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
+    echo ""
     echo "⚙️  Creating .env file..."
     cp .env.example .env
-    echo "✅ Created .env file. Please configure your settings in .env"
+    echo "✅ Created .env file from template"
+    echo "   You can customize it if needed"
 else
     echo "✅ .env file already exists"
 fi
 
-# Install example dependencies
-echo "📦 Installing example dependencies..."
-cd examples && npm install && cd ..
-
-# Make scripts executable
-chmod +x examples/test-curl.sh
-
 echo ""
-echo "✅ Setup completed!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Configure your .env file with appropriate settings"
-echo "2. Start the service: npm run dev"
-echo "3. Test with: node examples/test-api.js <audio-file>"
+echo "🎉 Setup completed successfully!"
 echo ""
 echo "📚 Available commands:"
 echo "   npm run dev     - Start development server"
 echo "   npm run build   - Build for production"
 echo "   npm start       - Start production server"
 echo ""
+echo "🌐 The service will be available at: http://localhost:3001"
