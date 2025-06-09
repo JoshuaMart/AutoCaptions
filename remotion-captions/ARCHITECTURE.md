@@ -8,25 +8,16 @@ The Remotion Captions API is a REST service that generates captioned videos by c
 
 ```
 remotion-captions/
-├── src/                          # API Source Code
+├── src/                          # API REST TypeScript
 │   ├── controllers/              # Request handlers
-│   │   └── render.controller.ts  # Main render endpoint
 │   ├── middleware/               # Express middleware
-│   │   └── upload.ts            # File upload handling
-│   ├── services/                # Business logic
-│   │   ├── video.service.ts     # Video processing & conversion
-│   │   └── render.service.ts    # Remotion render orchestration
-│   ├── types/                   # TypeScript definitions
-│   │   └── index.ts            # All interface definitions
-│   ├── utils/                   # Utility functions
-│   │   └── directories.ts      # Directory management
-│   ├── config.ts               # Configuration
-│   └── app.ts                  # Express application
-└── remotion/                    # Remotion project
-    ├── src/                     # Remotion components
-    ├── public/uploads/          # Upload storage
-    ├── package.json            # Remotion dependencies
-    └── remotion.config.ts      # Remotion configuration
+│   ├── services/                 # Business logic
+│   ├── types/                    # TypeScript definitions
+│   └── utils/                    # Utility functions
+├── remotion/                     # Remotion project
+│   ├── src/                      # Remotion components
+│   └── public/uploads/           # Upload storage
+└── package.json                  # API dependencies
 ```
 
 ## Data Flow

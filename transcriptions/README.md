@@ -157,7 +157,3 @@ src/
 ├── types/           # TypeScript type definitions
 └── utils/           # Utility functions
 ```
-
-## License
-
-MIT

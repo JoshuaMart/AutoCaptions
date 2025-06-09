@@ -1,23 +1,44 @@
 # Remotion Captions API
 
-REST API for generating captioned videos using Remotion. This service takes a video file and transcription data to create a video with animated captions.
+TypeScript API for generating captioned videos using Remotion. This service takes a video file and transcription data to create video captions with customizable effects.
 
-## Features
+## ✨ Features
 
-- **Video Processing**: Automatic H.264 conversion if needed
-- **Caption Rendering**: Uses Remotion for high-quality caption animations
-- **File Management**: Automatic cleanup of temporary files
-- **Download Links**: Secure download URLs for rendered videos
+- 🎨 **Fully customizable styling** - colors, fonts, positioning, effects
+- 🔄 **Automatic H.264 conversion** for optimal compatibility
+- 🌐 **Google Fonts integration** with dynamic loading
+- 🧹 **Automatic file cleanup** and management
 
-## API Endpoints
+## 🚀 Quick Start
 
-### POST /render
+### Installation
+
+1. **Install API dependencies:**
+```bash
+npm install
+```
+
+2. **Install Remotion dependencies:**
+```bash
+cd remotion
+npm install
+cd ..
+```
+
+3. **Start the development server:**
+```bash
+npm run dev
+```
+
+## 📡 API Endpoints
+
+### `POST /render`
 
 Render a video with captions.
 
 **Request:**
 - `Content-Type: multipart/form-data`
-- `video`: Video file (MP4, MOV, AVI, MKV, WebM)
+- `video`: Video file (MP4, MOV, AVI, MKV, WebM, max 100MB)
 - `transcription`: JSON string with transcription data
 - `props`: JSON string with render configuration
 
@@ -30,15 +51,13 @@ Render a video with captions.
 }
 ```
 
-### GET /download/:uploadId
+### `GET /download/:uploadId`
 
-Download rendered video.
+Download rendered video (expires after 60 minutes).
 
-**Response:**
-- Video file with `Content-Type: video/mp4`
-- `Content-Disposition: attachment`
+**Response:** Video file with `Content-Type: video/mp4`
 
-### GET /health
+### `GET /health`
 
 Health check endpoint.
 
@@ -51,9 +70,9 @@ Health check endpoint.
 }
 ```
 
-## Transcription Format
+## 📋 Transcription Format
 
-The transcription data should follow this format:
+The transcription data should follow this format from the transcription service:
 
 ```json
 {
@@ -65,6 +84,12 @@ The transcription data should follow this format:
         "startMs": 0,
         "endMs": 500,
         "timestampMs": 250
+      },
+      {
+        "text": " world",
+        "startMs": 500,
+        "endMs": 1000,
+        "timestampMs": 750
       }
     ],
     "duration": 10.5,
@@ -79,9 +104,13 @@ The transcription data should follow this format:
 }
 ```
 
-## Props Configuration
+**Important:** Include leading spaces in the `text` field for proper word separation.
 
-Configure the visual style of captions:
+## 🎨 Props Configuration
+
+Configure the visual style of your captions:
+
+### Basic Structure
 
 ```json
 {
@@ -90,69 +119,177 @@ Configure the visual style of captions:
     "weight": "800"
   },
   "captionStyle": {
-    "maxWidth": 0.8,
+    "maxWidth": 0.9,
     "textColor": "white",
     "strokeColor": "black",
-    "strokeWidth": 10,
+    "strokeWidth": 3,
     "activeWordColor": "white",
-    "textPosition": "center",
-    "textPositionOffset": 0,
-    "wordPadding": 8,
+    "textPosition": "bottom",
+    "textPositionOffset": -100,
     "activeWordBackgroundColor": "#FF5700",
     "activeWordBackgroundOpacity": 1,
     "activeWordBorderRadius": 6,
-    "fontSize": 40
+    "wordPadding": 8,
+    "fontSize": 80
   }
 }
 ```
 
-## Installation
+### Font Configuration
 
-1. Install dependencies:
-```bash
-npm install
+| Property | Type | Description | Example |
+|----------|------|-------------|----------|
+| `family` | string | Google Font family name | `"Inter"`, `"Montserrat"`, `"Roboto"` |
+| `weight` | string | Font weight | `"400"`, `"700"`, `"800"`, `"900"` |
+
+### Caption Styling Options
+
+| Property | Type | Description | Default |
+|----------|------|-------------|----------|
+| `maxWidth` | number | Max width as % of video width (0.1-1.0) | `0.9` |
+| `textColor` | string | Color of caption text | `"white"` |
+| `strokeColor` | string | Color of text outline/border | `"black"` |
+| `strokeWidth` | number | Width of text outline in pixels | `3` |
+| `activeWordColor` | string | Color of currently active word | `"white"` |
+| `textPosition` | string | Caption position: `"top"`, `"center"`, `"bottom"` | `"bottom"` |
+| `textPositionOffset` | number | Position offset in pixels (+ or -) | `0` |
+| `fontSize` | number | Font size in pixels | `40` |
+
+### Background Highlight Effects
+
+| Property | Type | Description | Default |
+|----------|------|-------------|----------|
+| `activeWordBackgroundColor` | string | Background color for active word | `undefined` |
+| `activeWordBackgroundOpacity` | number | Background opacity (0-1) | `1` |
+| `activeWordBorderRadius` | number | Border radius for background in pixels | `6` |
+| `wordPadding` | number | Padding and spacing for all words in pixels | `8` |
+
+## 📱 Platform-Specific Presets
+
+### TikTok/Instagram Style
+```json
+{
+  "fontConfig": { "family": "Inter", "weight": "800" },
+  "captionStyle": {
+    "textPosition": "bottom",
+    "textPositionOffset": -100,
+    "activeWordBackgroundColor": "#FF5700",
+    "fontSize": 80,
+    "wordPadding": 12
+  }
+}
 ```
 
-2. Install Remotion dependencies:
-```bash
-cd remotion
-npm install
+### YouTube Shorts Style
+```json
+{
+  "fontConfig": { "family": "Montserrat", "weight": "700" },
+  "captionStyle": {
+    "textPosition": "center",
+    "activeWordBackgroundColor": "#FFD700",
+    "fontSize": 72,
+    "wordPadding": 10
+  }
+}
 ```
 
-3. Build TypeScript:
-```bash
-npm run build
+### Educational/Clean Style
+```json
+{
+  "fontConfig": { "family": "Roboto", "weight": "600" },
+  "captionStyle": {
+    "textPosition": "bottom",
+    "textColor": "white",
+    "strokeWidth": 2,
+    "fontSize": 48,
+    "wordPadding": 6
+  }
+}
 ```
 
-4. Start the server:
+## 🎯 Popular Google Fonts for Captions
+
+| Font Family | Best Weights | Style | Perfect For |
+|-------------|--------------|-------|-------------|
+| **Inter** | 600, 700, 800 | Modern, clean | TikTok-style highlights |
+| **Montserrat** | 600, 700, 900 | Versatile, bold | Instagram content |
+| **Oswald** | 400, 500, 600 | Condensed, impactful | Sports, action videos |
+| **Roboto** | 500, 700, 900 | Clean, readable | Educational content |
+| **Poppins** | 600, 700, 800 | Friendly, rounded | Lifestyle, vlog content |
+| **Bebas Neue** | 400 | Bold, uppercase | Dramatic, cinematic |
+| **Anton** | 400 | Extra bold, condensed | Headlines, impact |
+
+## 💡 Tips & Best Practices
+
+### Background Highlights
+- **Use high contrast colors** for active word backgrounds
+- **`wordPadding` controls both spacing and background size** - start with 8-12px
+- **Rounded corners (6-12px)** look more modern than sharp edges
+- **Full opacity** usually works better than transparency for readability
+
+### Font Selection
+- **Bold weights (700-900)** work best for captions with backgrounds
+- **Inter and Montserrat** are proven choices for highlight effects
+- **Sans-serif fonts** are more readable on video
+
+### Colors & Positioning
+- **White text + colored background** provides maximum contrast
+- **Bright backgrounds** (#FF5700, #E91E63, #2196F3) grab attention
+- Use **negative offsets** to move captions away from UI elements
+- **Test on different video backgrounds** to ensure readability
+
+## 🔧 Example Usage
+
+### Using cURL
+
 ```bash
-npm start
+curl -X POST http://localhost:3000/render \
+  -F "video=@input.mp4" \
+  -F "transcription=$(cat transcription.json)" \
+  -F "props=$(cat props.json)"
 ```
 
-For development:
-```bash
-npm run dev
+### File Processing Flow
+
+1. **Upload**: Video + transcription + props received
+2. **Validation**: File type and format validation
+3. **Conversion**: Automatic H.264 conversion if needed
+4. **Processing**: Extract captions array and generate props
+5. **Rendering**: Execute Remotion render with optimized settings
+6. **Response**: Return download URL for rendered video
+7. **Cleanup**: Automatic file cleanup after 60 minutes
+
+### Generated Files Structure
+
+```
+public/uploads/{uploadId}/
+├── original.mp4          # Original uploaded video
+├── video.mp4            # Processed video (H.264)
+├── video.json           # Extracted captions array
+├── props.json           # Complete Remotion props
+└── output.mp4           # Final rendered video
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-Environment variables:
+### Environment Variables
 
-- `PORT`: Server port (default: 3003)
+```bash
+# Server Configuration
+PORT=3003
 
-## File Management
+# File Processing
+MAX_FILE_SIZE_MB=100
+CLEANUP_TIMEOUT_MINUTES=60
 
-- Uploaded videos are stored in `remotion/public/uploads/{uploadId}/`
-- Files are automatically cleaned up after 60 minutes
-- Temporary files are removed immediately after processing
+# FFmpeg
+FFMPEG_TIMEOUT_MS=30000
 
-## Requirements
+# Development
+NODE_ENV=development
+```
 
-- **Node.js** 18+
-- **FFmpeg** installed and accessible in PATH
-- **Remotion** configured in the `remotion/` directory
-
-## Error Handling
+## 🔍 Error Handling
 
 The API returns structured error responses:
 
@@ -163,23 +300,35 @@ The API returns structured error responses:
 }
 ```
 
-Common error codes:
-- `400`: Bad request (missing files, invalid JSON)
+**Common error codes:**
+- `400`: Bad request (missing files, invalid JSON, unsupported format)
 - `404`: File not found or expired
-- `500`: Server error (processing failed)
+- `413`: File too large (>100MB)
+- `500`: Server error (processing failed, FFmpeg error, Remotion error)
 
-## Example Usage
+## 📊 Performance & Limits
 
-```bash
-curl -X POST http://localhost:3003/render \
-  -F "video=@input.mp4" \
-  -F "transcription=$(cat transcription.json)" \
-  -F "props=$(cat props.json)"
-```
+- **Max file size**: 100MB
+- **Supported formats**: MP4, MOV, AVI, MKV, WebM
+- **Render timeout**: 5 minutes
+- **File retention**: 60 minutes
+- **Concurrent renders**: Multiple uploads supported
+- **Auto H.264 conversion**: Ensures compatibility
 
-## Limitations
+## 🚀 Deployment
 
-- Max file size: 100MB
-- Render timeout: 5 minutes
-- Supported formats: MP4, MOV, AVI, MKV, WebM
-- Files expire after 60 minutes
+### Requirements
+
+- **Node.js** 22+
+- **npm** or **yarn**
+- **FFmpeg** (required for audio extraction and metadata)
+  - macOS: `brew install ffmpeg`
+  - Ubuntu: `sudo apt update && sudo apt install ffmpeg`
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
+
+### Integration with Other Services
+
+This API works seamlessly with:
+- **Transcription Service**: Provides the required transcription format
+- **FFmpeg Captions**: Alternative subtitle approach
+- **Frontend applications**: Via REST API
