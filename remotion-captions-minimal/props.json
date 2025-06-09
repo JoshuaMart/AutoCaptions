@@ -2,15 +2,19 @@
   "src": "public/test.mp4",
   "fontConfig": {
     "family": "Inter",
-    "weight": "700"
+    "weight": "800"
   },
   "captionStyle": {
     "maxWidth": 0.9,
     "textColor": "white",
     "strokeColor": "black",
-    "strokeWidth": 20,
-    "activeWordColor": "orange",
+    "strokeWidth": 10,
+    "activeWordColor": "white",
     "textPosition": "center",
-    "textPositionOffset": 300
+    "textPositionOffset": 0,
+    "activeWordBackgroundColor": "#FF5700",
+    "activeWordBackgroundOpacity": 1,
+    "activeWordBorderRadius": 6,
+    "activeWordPadding": 8
   }
 }

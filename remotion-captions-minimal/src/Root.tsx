@@ -18,16 +18,20 @@ export const RemotionRoot: React.FC = () => {
         src: staticFile("test.mp4"),
         fontConfig: {
           family: "Inter",
-          weight: "700",
+          weight: "800",
         },
         captionStyle: {
           maxWidth: 0.9,
           textColor: "white",
           strokeColor: "black",
-          strokeWidth: 20,
-          activeWordColor: "orange",
+          strokeWidth: 3,
+          activeWordColor: "white",
           textPosition: "bottom",
           textPositionOffset: 0,
+          activeWordBackgroundColor: "#FF5700",
+          activeWordBackgroundOpacity: 1,
+          activeWordBorderRadius: 6,
+          activeWordPadding: 8,
         },
       }}
     />

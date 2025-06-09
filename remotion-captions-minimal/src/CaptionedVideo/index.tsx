@@ -53,6 +53,10 @@ export interface CaptionStyle {
   activeWordColor: string;
   textPosition: "top" | "center" | "bottom";
   textPositionOffset: number;
+  activeWordBackgroundColor?: string;
+  activeWordBackgroundOpacity?: number;
+  activeWordBorderRadius?: number;
+  activeWordPadding?: number;
 }
 
 export interface FontConfig {
@@ -74,6 +78,10 @@ export const captionedVideoSchema = z.object({
     activeWordColor: z.string().default("orange"),
     textPosition: z.enum(["top", "center", "bottom"]).default("bottom"),
     textPositionOffset: z.number().default(0),
+    activeWordBackgroundColor: z.string().optional(),
+    activeWordBackgroundOpacity: z.number().min(0).max(1).optional(),
+    activeWordBorderRadius: z.number().min(0).optional(),
+    activeWordPadding: z.number().min(0).optional(),
   }),
 });
 
