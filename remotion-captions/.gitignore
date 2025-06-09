@@ -1,8 +1,0 @@
-node_modules
-dist
-.DS_Store
-.env
-public/*
-!public/theboldfont.ttf
-!public/theboldfont-license.rtf
-package-lock.json
