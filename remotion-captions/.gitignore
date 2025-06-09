@@ -5,3 +5,4 @@ dist
 public/*
 !public/theboldfont.ttf
 !public/theboldfont-license.rtf
+package-lock.json
