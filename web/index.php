@@ -5,7 +5,7 @@
  */
 
 session_start();
-require_once 'config/services.php';
+require_once "config/services.php";
 ?>
 
 <!DOCTYPE html>
@@ -14,22 +14,22 @@ require_once 'config/services.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoCaptions - Video Caption Generator</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Custom styling -->
     <style>
         /* Loading animation */
         .animate-pulse-slow {
             animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        
+
         /* File drop zone */
         .file-drop-zone {
             transition: all 0.3s ease;
         }
-        
+
         .file-drop-zone.drag-over {
             @apply border-blue-500 bg-blue-50;
         }
@@ -37,8 +37,8 @@ require_once 'config/services.php';
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
-    <?php include 'components/header.php'; ?>
-    
+    <?php include "components/header.php"; ?>
+
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Page Title -->
@@ -50,22 +50,22 @@ require_once 'config/services.php';
                 Generate automatic captions for your 9:16 videos with AI-powered transcription
             </p>
         </div>
-        
+
         <!-- Upload Card -->
         <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
             <!-- File Upload Area -->
             <div id="upload-section">
                 <div class="file-drop-zone border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-gray-400 transition-colors duration-200"
                      id="file-drop-zone">
-                    
+
                     <!-- Upload Icon -->
                     <div class="mb-4">
                         <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"/>
                         </svg>
                     </div>
-                    
+
                     <!-- Upload Text -->
                     <div class="mb-4">
                         <p class="text-xl font-medium text-gray-900 mb-2">
@@ -75,15 +75,15 @@ require_once 'config/services.php';
                             Supports MP4, MOV, AVI, MKV, WebM • Max 500MB • 9:16 format recommended
                         </p>
                     </div>
-                    
+
                     <!-- File Input -->
-                    <input type="file" 
-                           id="video-input" 
+                    <input type="file"
+                           id="video-input"
                            accept="video/mp4,video/mov,video/avi,video/mkv,video/webm"
                            class="hidden">
-                    
+
                     <!-- Upload Button -->
-                    <button type="button" 
+                    <button type="button"
                             onclick="document.getElementById('video-input').click()"
                             class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@ require_once 'config/services.php';
                         Choose Video File
                     </button>
                 </div>
-                
+
                 <!-- File Information (Hidden by default) -->
                 <div id="file-info" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
                     <div class="flex items-center justify-between">
@@ -105,12 +105,12 @@ require_once 'config/services.php';
                             <div>
                                 <p class="text-sm font-medium text-gray-900" id="file-name"></p>
                                 <p class="text-sm text-gray-500">
-                                    <span id="file-size"></span> • 
+                                    <span id="file-size"></span> •
                                     <span id="file-duration"></span>
                                 </p>
                             </div>
                         </div>
-                        <button type="button" 
+                        <button type="button"
                                 onclick="clearFile()"
                                 class="text-gray-400 hover:text-gray-600 focus:outline-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +120,7 @@ require_once 'config/services.php';
                     </div>
                 </div>
             </div>
-            
+
             <!-- Processing Section (Hidden by default) -->
             <div id="processing-section" class="hidden text-center">
                 <div class="mb-4">
@@ -135,16 +135,16 @@ require_once 'config/services.php';
                     Extracting audio and generating transcription...
                 </p>
                 <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                         style="width: 0%" 
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                         style="width: 0%"
                          id="progress-bar"></div>
                 </div>
                 <p class="text-xs text-gray-400 mt-2" id="progress-text">0%</p>
             </div>
-            
+
             <!-- Action Buttons -->
             <div id="action-buttons" class="hidden mt-6 flex justify-center space-x-4">
-                <button type="button" 
+                <button type="button"
                         onclick="startTranscription()"
                         id="transcribe-btn"
                         class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
@@ -153,8 +153,8 @@ require_once 'config/services.php';
                     </svg>
                     Generate Transcription
                 </button>
-                
-                <button type="button" 
+
+                <button type="button"
                         onclick="clearFile()"
                         class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,7 +164,7 @@ require_once 'config/services.php';
                 </button>
             </div>
         </div>
-        
+
         <!-- Features Section -->
         <div class="grid md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow p-6 text-center">
@@ -178,7 +178,7 @@ require_once 'config/services.php';
                     Powered by OpenAI Whisper for accurate speech-to-text conversion
                 </p>
             </div>
-            
+
             <div class="bg-white rounded-lg shadow p-6 text-center">
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@ require_once 'config/services.php';
                     Choose between FFmpeg for speed or Remotion for advanced customization
                 </p>
             </div>
-            
+
             <div class="bg-white rounded-lg shadow p-6 text-center">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,91 +204,92 @@ require_once 'config/services.php';
             </div>
         </div>
     </main>
-    
+
     <!-- Settings Modal -->
-    <?php include 'components/settings-modal.php'; ?>
-    
+    <?php include "components/settings-modal.php"; ?>
+
     <!-- JavaScript -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
     <script>
         // File upload functionality
         let selectedFile = null;
-        
+
         // Initialize file upload
         document.addEventListener('DOMContentLoaded', function() {
             initializeFileUpload();
         });
-        
+
         function initializeFileUpload() {
             const dropZone = document.getElementById('file-drop-zone');
             const fileInput = document.getElementById('video-input');
-            
+
             // Click to upload
             dropZone.addEventListener('click', () => fileInput.click());
-            
+
             // Drag and drop events
             dropZone.addEventListener('dragover', handleDragOver);
             dropZone.addEventListener('dragleave', handleDragLeave);
             dropZone.addEventListener('drop', handleDrop);
-            
+
             // File input change
             fileInput.addEventListener('change', handleFileSelect);
         }
-        
+
         function handleDragOver(event) {
             event.preventDefault();
             event.currentTarget.classList.add('drag-over');
         }
-        
+
         function handleDragLeave(event) {
             event.preventDefault();
             event.currentTarget.classList.remove('drag-over');
         }
-        
+
         function handleDrop(event) {
             event.preventDefault();
             event.currentTarget.classList.remove('drag-over');
-            
+
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 handleFile(files[0]);
             }
         }
-        
+
         function handleFileSelect(event) {
             const files = event.target.files;
             if (files.length > 0) {
                 handleFile(files[0]);
             }
         }
-        
+
         function handleFile(file) {
             try {
                 // Validate file
                 Utils.validateVideoFile(file);
-                
+
                 selectedFile = file;
                 showFileInfo(file);
                 showActionButtons();
-                
+
             } catch (error) {
                 showNotification('error', 'Invalid File', error.message);
                 clearFile();
             }
         }
-        
+
         function showFileInfo(file) {
             const fileInfo = document.getElementById('file-info');
             const fileName = document.getElementById('file-name');
             const fileSize = document.getElementById('file-size');
             const fileDuration = document.getElementById('file-duration');
-            
+
             fileName.textContent = file.name;
             fileSize.textContent = Utils.formatFileSize(file.size);
             fileDuration.textContent = 'Analyzing...';
-            
+
             fileInfo.classList.remove('hidden');
-            
+
             // Get video duration
             getVideoDuration(file).then(duration => {
                 fileDuration.textContent = Utils.formatDuration(duration);
@@ -296,11 +297,11 @@ require_once 'config/services.php';
                 fileDuration.textContent = 'Unknown duration';
             });
         }
-        
+
         function showActionButtons() {
             document.getElementById('action-buttons').classList.remove('hidden');
         }
-        
+
         function clearFile() {
             selectedFile = null;
             document.getElementById('video-input').value = '';
@@ -309,52 +310,56 @@ require_once 'config/services.php';
             document.getElementById('processing-section').classList.add('hidden');
             document.getElementById('upload-section').classList.remove('hidden');
         }
-        
+
         function getVideoDuration(file) {
             return new Promise((resolve, reject) => {
                 const video = document.createElement('video');
                 video.preload = 'metadata';
-                
+
                 video.onloadedmetadata = function() {
                     window.URL.revokeObjectURL(video.src);
                     resolve(video.duration);
                 };
-                
+
                 video.onerror = function() {
                     reject(new Error('Could not load video'));
                 };
-                
+
                 video.src = URL.createObjectURL(file);
             });
         }
-        
+
         async function startTranscription() {
             if (!selectedFile) {
                 showNotification('error', 'No File', 'Please select a video file first');
                 return;
             }
-            
+
             // Show processing UI
             document.getElementById('upload-section').classList.add('hidden');
             document.getElementById('action-buttons').classList.add('hidden');
             document.getElementById('processing-section').classList.remove('hidden');
-            
+
             try {
                 // Prepare form data
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                formData.append('service', 'whisper-cpp'); // Default service
-                
+                const formData = {
+                    service: 'whisper-cpp' // Default service
+                };
+
+                const files = {
+                    file: selectedFile
+                };
+
                 // Start transcription
-                const result = await API.call('transcriptions', 'api/transcribe', 'POST', formData);
-                
+                const result = await API.call('transcriptions', 'api/transcribe', 'POST', formData, files);
+
                 if (result.success) {
                     // Store transcription data in session/localStorage
                     sessionStorage.setItem('transcriptionData', JSON.stringify(result));
                     sessionStorage.setItem('videoFileName', selectedFile.name);
-                    
+
                     showNotification('success', 'Transcription Complete', 'Redirecting to edit page...');
-                    
+
                     // Redirect to transcription edit page
                     setTimeout(() => {
                         window.location.href = 'pages/transcription.php';
@@ -362,36 +367,36 @@ require_once 'config/services.php';
                 } else {
                     throw new Error(result.error || 'Transcription failed');
                 }
-                
+
             } catch (error) {
                 console.error('Transcription failed:', error);
                 showNotification('error', 'Transcription Failed', error.message);
-                
+
                 // Reset UI
                 clearFile();
                 document.getElementById('upload-section').classList.remove('hidden');
             }
         }
-        
+
         // Progress simulation (you can replace this with real progress tracking)
         function simulateProgress() {
             const progressBar = document.getElementById('progress-bar');
             const progressText = document.getElementById('progress-text');
             let progress = 0;
-            
+
             const interval = setInterval(() => {
                 progress += Math.random() * 15;
                 if (progress > 95) progress = 95;
-                
+
                 progressBar.style.width = progress + '%';
                 progressText.textContent = Math.round(progress) + '%';
-                
+
                 if (progress >= 95) {
                     clearInterval(interval);
                 }
             }, 500);
         }
-        
+
         // Start progress simulation when processing begins
         document.getElementById('processing-section').addEventListener('DOMSubtreeModified', function() {
             if (!this.classList.contains('hidden')) {
