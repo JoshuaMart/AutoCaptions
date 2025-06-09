@@ -9,14 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "test": "jest"
   },
-  "keywords": [
-    "captions",
-    "ffmpeg",
-    "ass",
-    "subtitles",
-    "api"
-  ],
-  "author": "",
+  "author": "JoshuaMart",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",

@@ -9,13 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "test": "jest"
   },
-  "keywords": [
-    "transcription",
-    "whisper",
-    "api",
-    "captions"
-  ],
-  "author": "",
+  "author": "JoshuaMart",
   "license": "MIT",
   "dependencies": {
     "@remotion/install-whisper-cpp": "4.0.314",
