@@ -138,7 +138,7 @@ npm run dev
 
 Environment variables:
 
-- `PORT`: Server port (default: 3000)
+- `PORT`: Server port (default: 3003)
 
 ## File Management
 
@@ -171,7 +171,7 @@ Common error codes:
 ## Example Usage
 
 ```bash
-curl -X POST http://localhost:3000/render \
+curl -X POST http://localhost:3003/render \
   -F "video=@input.mp4" \
   -F "transcription=$(cat transcription.json)" \
   -F "props=$(cat props.json)"
