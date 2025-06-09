@@ -1,0 +1,54 @@
+services:
+  transcriptions:
+    build:
+      context: ./transcriptions
+      dockerfile: Dockerfile
+    container_name: auto-captions-transcriptions
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ffmpeg-captions:
+    build:
+      context: ./ffmpeg-captions
+      dockerfile: Dockerfile
+    container_name: auto-captions-ffmpeg
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  remotion-captions:
+    build:
+      context: ./remotion-captions
+      dockerfile: Dockerfile
+    container_name: auto-captions-remotion
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
