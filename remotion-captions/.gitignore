@@ -1,3 +1,16 @@
-public
-node_modules
+# Dependencies
+node_modules/
 package-lock.json
+remotion/package-lock.json
+
+# Build output
+dist/
+
+# Environment variables
+.env
+
+# Uploads and temporary files
+remotion/public/uploads/
+
+# Tests files
+test*

@@ -1,223 +1,185 @@
-# Remotion Captions - Minimal
+# Remotion Captions API
 
+REST API for generating captioned videos using Remotion. This service takes a video file and transcription data to create a video with animated captions.
 
-## ✨ Features
+## Features
 
-- ✅ **TikTok-style captions** with word-by-word highlighting
-- ✅ **Background highlight effects** with customizable colors and styling
-- ✅ **Flexible positioning** - top, center, or bottom with custom offsets
-- ✅ **Google Fonts integration** with dynamic loading
-- ✅ **Fully customizable styling** via JSON props
-- ✅ **Smooth animations** without layout shifts
-- ✅ **Minimal codebase** - only essential files
+- **Video Processing**: Automatic H.264 conversion if needed
+- **Caption Rendering**: Uses Remotion for high-quality caption animations
+- **File Management**: Automatic cleanup of temporary files
+- **Download Links**: Secure download URLs for rendered videos
 
-## 🚀 Quick Start
+## API Endpoints
 
-### 1. Installation
+### POST /render
 
-```bash
-cd remotion-captions-minimal
-npm install
+Render a video with captions.
+
+**Request:**
+- `Content-Type: multipart/form-data`
+- `video`: Video file (MP4, MOV, AVI, MKV, WebM)
+- `transcription`: JSON string with transcription data
+- `props`: JSON string with render configuration
+
+**Response:**
+```json
+{
+  "success": true,
+  "downloadUrl": "http://localhost:3000/download/uuid",
+  "renderTime": 5432
+}
 ```
 
-### 2. Prepare your files
+### GET /download/:uploadId
 
-Place your files in the `public/` folder:
-- **Video**: `public/your-video.mp4`
-- **Captions**: `public/your-video.json` (same name, .json extension)
+Download rendered video.
 
-### 3. Configure and render
+**Response:**
+- Video file with `Content-Type: video/mp4`
+- `Content-Disposition: attachment`
 
-```bash
-npx remotion render CaptionedVideo output.mp4 --props=./props.json
+### GET /health
+
+Health check endpoint.
+
+**Response:**
+```json
+{
+  "success": true,
+  "service": "remotion-captions",
+  "timestamp": "2025-06-09T10:00:00.000Z"
+}
 ```
 
-## 📋 Props Configuration
+## Transcription Format
 
-### Basic Structure
+The transcription data should follow this format:
 
 ```json
 {
-  "src": "public/your-video.mp4",
+  "success": true,
+  "transcription": {
+    "captions": [
+      {
+        "text": "Hello",
+        "startMs": 0,
+        "endMs": 500,
+        "timestampMs": 250
+      }
+    ],
+    "duration": 10.5,
+    "language": "english",
+    "metadata": {
+      "service": "openai-whisper",
+      "model": "whisper-1",
+      "timestamp": "2025-06-09T10:00:00.000Z"
+    }
+  },
+  "processingTime": 1500
+}
+```
+
+## Props Configuration
+
+Configure the visual style of captions:
+
+```json
+{
   "fontConfig": {
     "family": "Inter",
     "weight": "800"
   },
   "captionStyle": {
-    "maxWidth": 0.9,
+    "maxWidth": 0.8,
     "textColor": "white",
     "strokeColor": "black",
-    "strokeWidth": 3,
+    "strokeWidth": 10,
     "activeWordColor": "white",
-    "textPosition": "bottom",
+    "textPosition": "center",
     "textPositionOffset": 0,
+    "wordPadding": 8,
     "activeWordBackgroundColor": "#FF5700",
     "activeWordBackgroundOpacity": 1,
     "activeWordBorderRadius": 6,
-    "wordPadding": 8,
-    "fontSize": 80
+    "fontSize": 40
   }
 }
 ```
 
-### Font Configuration
+## Installation
 
-| Property | Type | Description | Example |
-|----------|------|-------------|---------|
-| `family` | string | Google Font family name | `"Inter"`, `"Montserrat"`, `"Roboto"` |
-| `weight` | string | Font weight | `"400"`, `"700"`, `"800"`, `"900"` |
+1. Install dependencies:
+```bash
+npm install
+```
 
-### Caption Styling
+2. Install Remotion dependencies:
+```bash
+cd remotion
+npm install
+```
 
-| Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `maxWidth` | number | Max width as % of video width (0.1-1.0) | `0.9` |
-| `textColor` | string | Color of caption text | `"white"` |
-| `strokeColor` | string | Color of text outline/border | `"black"` |
-| `strokeWidth` | number | Width of text outline in pixels | `3` |
-| `activeWordColor` | string | Color of currently active word | `"white"` |
-| `textPosition` | string | Caption position: `"top"`, `"center"`, `"bottom"` | `"bottom"` |
-| `textPositionOffset` | number | Position offset in pixels (positive/negative) | `0` |
+3. Build TypeScript:
+```bash
+npm run build
+```
 
-### Background Highlight Effects
+4. Start the server:
+```bash
+npm start
+```
 
-| Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `activeWordBackgroundColor` | string | Background color for active word | `undefined` |
-| `activeWordBackgroundOpacity` | number | Background opacity (0-1) | `1` |
-| `activeWordBorderRadius` | number | Border radius for background in pixels | `6` |
-| `wordPadding` | number | Padding and spacing for all words in pixels | `8` |
+For development:
+```bash
+npm run dev
+```
 
-### Text Positioning Examples
+## Configuration
+
+Environment variables:
+
+- `PORT`: Server port (default: 3000)
+
+## File Management
+
+- Uploaded videos are stored in `remotion/public/uploads/{uploadId}/`
+- Files are automatically cleaned up after 60 minutes
+- Temporary files are removed immediately after processing
+
+## Requirements
+
+- **Node.js** 18+
+- **FFmpeg** installed and accessible in PATH
+- **Remotion** configured in the `remotion/` directory
+
+## Error Handling
+
+The API returns structured error responses:
 
 ```json
 {
-  "captionStyle": {
-    "textPosition": "bottom",
-    "textPositionOffset": -100
-  }
+  "success": false,
+  "error": "Error message"
 }
 ```
 
-**Common use cases:**
-- **TikTok/Instagram**: `"bottom"` + `textPositionOffset: -100` (avoids UI overlap)
-- **YouTube Shorts**: `"center"` + `textPositionOffset: 0` (centered)
+Common error codes:
+- `400`: Bad request (missing files, invalid JSON)
+- `404`: File not found or expired
+- `500`: Server error (processing failed)
 
-## 📁 Caption File Format
+## Example Usage
 
-Create a JSON file with the same name as your video:
-
-```json
-[
-  {
-    "text": " Hello",
-    "startMs": 0,
-    "endMs": 500,
-    "timestampMs": 250
-  },
-  {
-    "text": " world",
-    "startMs": 500,
-    "endMs": 1000,
-    "timestampMs": 750
-  }
-]
-```
-
-**Important**: Include leading spaces in the `text` field for proper word separation.
-
-## 📱 Popular Google Fonts for Captions
-
-| Font Family | Best Weights | Style | Perfect For |
-|-------------|--------------|-------|-------------|
-| **Inter** | 600, 700, 800 | Modern, clean | TikTok-style highlights |
-| **Montserrat** | 600, 700, 900 | Versatile, bold | Instagram content |
-| **Oswald** | 400, 500, 600 | Condensed, impactful | Sports, action videos |
-| **Roboto** | 500, 700, 900 | Clean, readable | Educational content |
-| **Poppins** | 600, 700, 800 | Friendly, rounded | Lifestyle, vlog content |
-| **Bebas Neue** | 400 | Bold, uppercase | Dramatic, cinematic |
-| **Anton** | 400 | Extra bold, condensed | Headlines, impact |
-
-## 🎯 Tips & Best Practices
-
-### Background Highlights
-- **Use high contrast colors** for active word backgrounds
-- **`wordPadding` controls both spacing and background size** - start with 8-12px
-- **Rounded corners (6-12px)** look more modern than sharp edges
-- **Full opacity** usually works better than transparency for readability
-
-### Font Selection
-- **Bold weights (700-900)** work best for captions with backgrounds
-- **Inter and Montserrat** are proven choices for highlight effects
-- **Sans-serif fonts** are more readable on video
-
-### Colors
-- **White text + colored background** provides maximum contrast
-- **Bright backgrounds** (#FF5700, #E91E63, #2196F3) grab attention
-- **Test on different video backgrounds** to ensure readability
-
-### Positioning
-- Use **negative offsets** to move captions away from UI elements
-- **Center position** works best for landscape videos
-- **Bottom position** is ideal for TikTok/Instagram format
-- Test different offsets to find the perfect placement
-
-### Sizing
-- `maxWidth: 0.9` (90%) prevents text overflow
-- `strokeWidth: 2-4px` for modern look with backgrounds
-- `wordPadding: 8-16px` for comfortable spacing
-
-## 🏗️ Project Structure
-
-```
-remotion-captions-minimal/
-├── src/
-│   ├── CaptionedVideo/
-│   │   ├── index.tsx         # Main component with font loading
-│   │   └── CaptionPage.tsx   # Caption rendering with highlight effects
-│   ├── Root.tsx               # Composition setup
-│   └── index.ts               # Entry point
-├── public/
-│   └── tmp/
-│       ├── test.mp4          # Sample video
-│       └── test.json         # Sample captions
-├── props.json                 # Default props with highlight config
-└── package.json               # Dependencies
-```
-
-## 🎬 Caption Timing & Animation
-
-### Automatic Grouping
-Captions are automatically grouped using TikTok-style logic:
-- Words within 1200ms are grouped together
-- Smart page breaks for readability
-- Smooth transitions between caption groups
-
-## 🚀 Advanced Usage
-
-### Custom Props via CLI
 ```bash
-# Use custom props file
-npx remotion render CaptionedVideo output.mp4 --props=./custom-props.json
-
-# Override props inline
-npx remotion render CaptionedVideo output.mp4 --props='{"captionStyle":{"activeWordBackgroundColor":"#FF0000"}}'
+curl -X POST http://localhost:3000/render \
+  -F "video=@input.mp4" \
+  -F "transcription=$(cat transcription.json)" \
+  -F "props=$(cat props.json)"
 ```
 
-### Multiple Compositions
-Add different styles for different platforms in `Root.tsx`:
-```typescript
-// TikTok version with orange highlights
-<Composition id="TikTokVideo" /* ... */ />
+## Limitations
 
-// YouTube version with gold highlights
-<Composition id="YouTubeVideo" /* ... */ />
-```
-
-## 📄 License
-
-MIT License - Use freely for personal and commercial projects.
-
----
-
-**Made with ❤️ using [Remotion](https://remotion.dev)**
+- Max file size: 100MB
+- Render timeout: 5 minutes
+- Supported formats: MP4, MOV, AVI, MKV, WebM
+- Files expire after 60 minutes
