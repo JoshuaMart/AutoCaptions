@@ -1,7 +1,18 @@
-import { GoogleFont, FontVariant } from "../types";
+import { execSync } from "child_process";
 
-// Mapping of font weights to their display names
-const WEIGHT_NAMES: { [key: number]: string } = {
+interface Font {
+  family: string;
+  variants: string[];
+  category: string;
+}
+
+interface SystemFont {
+  family: string;
+  style: string;
+  file: string;
+}
+
+const WEIGHT_NAMES = {
   100: "Thin",
   200: "Extra Light",
   300: "Light",
@@ -13,9 +24,8 @@ const WEIGHT_NAMES: { [key: number]: string } = {
   900: "Black",
 };
 
-// List of popular Google Fonts for captions
-// This list can be extended or loaded from the Google Fonts API.
-const POPULAR_FONTS: GoogleFont[] = [
+// Expected fonts that should be installed
+const EXPECTED_FONTS = [
   {
     family: "Arial Black",
     variants: ["400"],
@@ -94,28 +104,87 @@ const POPULAR_FONTS: GoogleFont[] = [
 ];
 
 export class FontService {
-  getAllFonts(): GoogleFont[] {
-    return POPULAR_FONTS;
+  private systemFonts: SystemFont[] = [];
+  private availableFonts: Font[] = [];
+  private initialized = false;
+
+  constructor() {
+    this.initializeFonts();
   }
 
-  getFontsByCategory(category: string): GoogleFont[] {
-    return POPULAR_FONTS.filter((font) => font.category === category);
+  private initializeFonts(): void {
+    try {
+      // Get system fonts using fc-list
+      const result = execSync(
+        'fc-list --format="%{family}:%{style}:%{file}\n"',
+        {
+          encoding: "utf8",
+          timeout: 5000,
+        },
+      );
+
+      this.systemFonts = result
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => {
+          const [family, style, file] = line.split(":");
+          return {
+            family: family?.trim() || "",
+            style: style?.trim() || "",
+            file: file?.trim() || "",
+          };
+        })
+        .filter((font) => font.family);
+
+      // Match expected fonts with available system fonts
+      this.availableFonts = EXPECTED_FONTS.filter((expectedFont) => {
+        return this.systemFonts.some(
+          (systemFont) =>
+            systemFont.family
+              .toLowerCase()
+              .includes(expectedFont.family.toLowerCase()) ||
+            expectedFont.family
+              .toLowerCase()
+              .includes(systemFont.family.toLowerCase()),
+        );
+      });
+
+      this.initialized = true;
+      console.log(
+        `FontService initialized with ${this.availableFonts.length} available fonts`,
+      );
+    } catch (error) {
+      console.error("Failed to initialize fonts:", error);
+      this.availableFonts = [];
+      this.initialized = true;
+    }
   }
 
-  getFont(family: string): GoogleFont | null {
-    return POPULAR_FONTS.find((font) => font.family === family) || null;
+  getAllFonts(): Font[] {
+    if (!this.initialized) {
+      this.initializeFonts();
+    }
+    return this.availableFonts;
+  }
+
+  getFontsByCategory(category: string): Font[] {
+    return this.getAllFonts().filter((font) => font.category === category);
+  }
+
+  getFont(family: string): Font | null {
+    return this.getAllFonts().find((font) => font.family === family) || null;
   }
 
   getFontCategories(): string[] {
-    const categories = new Set(POPULAR_FONTS.map((font) => font.category));
+    const categories = new Set(this.getAllFonts().map((font) => font.category));
     return Array.from(categories);
   }
 
   isValidFont(family: string): boolean {
-    return POPULAR_FONTS.some((font) => font.family === family);
+    return this.getAllFonts().some((font) => font.family === family);
   }
 
-  getFontVariants(family: string): FontVariant[] {
+  getFontVariants(family: string) {
     const font = this.getFont(family);
     if (!font) {
       return [];
@@ -124,9 +193,11 @@ export class FontService {
     return font.variants.map((variant) => {
       const weight = parseInt(variant, 10);
       return {
-        name: WEIGHT_NAMES[weight] || `Weight ${weight}`,
+        name:
+          WEIGHT_NAMES[weight as keyof typeof WEIGHT_NAMES] ||
+          `Weight ${weight}`,
         weight,
-        style: "normal", // For now, we only support normal style
+        style: "normal",
       };
     });
   }
@@ -142,14 +213,13 @@ export class FontService {
   getClosestFontWeight(family: string, desiredWeight: number): number {
     const font = this.getFont(family);
     if (!font) {
-      return 400; // Default to regular
+      return 400;
     }
 
     const availableWeights = font.variants.map((v) => parseInt(v, 10));
-    
-    // Find the closest weight
     return availableWeights.reduce((closest, current) => {
-      return Math.abs(current - desiredWeight) < Math.abs(closest - desiredWeight)
+      return Math.abs(current - desiredWeight) <
+        Math.abs(closest - desiredWeight)
         ? current
         : closest;
     });
