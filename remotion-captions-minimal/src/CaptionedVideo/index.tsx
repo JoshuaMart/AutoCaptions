@@ -15,8 +15,35 @@ import {
 import { z } from "zod";
 import { CaptionPage } from "./CaptionPage";
 import { getVideoMetadata } from "@remotion/media-utils";
-import { loadProjectFont } from "../load-font";
 import { Caption, createTikTokStyleCaptions } from "@remotion/captions";
+import { getAvailableFonts } from "@remotion/google-fonts";
+
+// Dynamic font loading utility
+const loadGoogleFont = async (fontFamily: string, weight: string) => {
+  try {
+    const availableFonts = getAvailableFonts();
+    const fontInfo = availableFonts.find(
+      (font) => font.fontFamily === fontFamily
+    );
+    
+    if (!fontInfo) {
+      console.warn(`Font "${fontFamily}" not found in Google Fonts. Using fallback.`);
+      return { fontFamily: fontFamily, waitUntilDone: () => Promise.resolve() };
+    }
+
+    const fontModule = await fontInfo.load();
+    const { fontFamily: loadedFontFamily, waitUntilDone } = fontModule.loadFont("normal", {
+      weights: [weight],
+      subsets: ["latin"],
+    });
+    
+    await waitUntilDone();
+    return { fontFamily: loadedFontFamily, waitUntilDone };
+  } catch (error) {
+    console.error(`Error loading font "${fontFamily}":`, error);
+    return { fontFamily: fontFamily, waitUntilDone: () => Promise.resolve() };
+  }
+};
 
 export interface CaptionStyle {
   maxWidth: number;
@@ -26,8 +53,17 @@ export interface CaptionStyle {
   activeWordColor: string;
 }
 
+export interface FontConfig {
+  family: string;
+  weight: string;
+}
+
 export const captionedVideoSchema = z.object({
   src: z.string(),
+  fontConfig: z.object({
+    family: z.string().default("Inter"),
+    weight: z.string().default("700"),
+  }),
   captionStyle: z.object({
     maxWidth: z.number().min(0.1).max(1).default(0.9),
     textColor: z.string().default("white"),
@@ -71,9 +107,10 @@ const SWITCH_CAPTIONS_EVERY_MS = 1200;
 
 export const CaptionedVideo: React.FC<CaptionedVideoProps> = () => {
   const props = getInputProps<CaptionedVideoProps>();
-  const { src, captionStyle } = props;
+  const { src, fontConfig, captionStyle } = props;
   
   const [subtitles, setSubtitles] = useState<Caption[]>([]);
+  const [loadedFontFamily, setLoadedFontFamily] = useState<string>(fontConfig.family);
   const [handle] = useState(() => delayRender());
   const { fps } = useVideoConfig();
 
@@ -86,7 +123,12 @@ export const CaptionedVideo: React.FC<CaptionedVideoProps> = () => {
   const fetchSubtitles = useCallback(async () => {
     try {
       console.log('Loading subtitles from:', subtitlesFile);
-      await loadProjectFont();
+      console.log('Loading font:', fontConfig.family, 'with weight:', fontConfig.weight);
+      
+      // Load font first
+      const { fontFamily } = await loadGoogleFont(fontConfig.family, fontConfig.weight);
+      setLoadedFontFamily(fontFamily);
+      
       const res = await fetch(subtitlesFile);
       console.log('Fetch response status:', res.status);
       if (!res.ok) {
@@ -102,7 +144,7 @@ export const CaptionedVideo: React.FC<CaptionedVideoProps> = () => {
       setSubtitles([]);
       continueRender(handle);
     }
-  }, [handle, subtitlesFile]);
+  }, [handle, subtitlesFile, fontConfig]);
 
   useEffect(() => {
     fetchSubtitles();
@@ -156,7 +198,7 @@ export const CaptionedVideo: React.FC<CaptionedVideoProps> = () => {
             from={subtitleStartFrame}
             durationInFrames={durationInFrames}
           >
-            <CaptionPage page={page} captionStyle={captionStyle} />
+            <CaptionPage page={page} captionStyle={captionStyle} fontFamily={loadedFontFamily} />
           </Sequence>
         );
       })}

@@ -1,5 +1,9 @@
 {
   "src": "public/test.mp4",
+  "fontConfig": {
+    "family": "Inter",
+    "weight": "700"
+  },
   "captionStyle": {
     "maxWidth": 0.9,
     "textColor": "white",

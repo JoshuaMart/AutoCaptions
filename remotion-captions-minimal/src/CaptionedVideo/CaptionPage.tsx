@@ -6,7 +6,6 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { TheBoldFont } from "../load-font";
 import { fitText } from "@remotion/layout-utils";
 import { makeTransform, scale, translateY } from "@remotion/animation-utils";
 import { TikTokPage } from "@remotion/captions";
@@ -17,7 +16,8 @@ const DESIRED_FONT_SIZE = 120;
 export const CaptionPage: React.FC<{
   readonly page: TikTokPage;
   readonly captionStyle: CaptionStyle;
-}> = ({ page, captionStyle }) => {
+  readonly fontFamily: string;
+}> = ({ page, captionStyle, fontFamily }) => {
   const frame = useCurrentFrame();
   const { width, fps } = useVideoConfig();
   const timeInMs = (frame / fps) * 1000;
@@ -32,7 +32,7 @@ export const CaptionPage: React.FC<{
   });
 
   const fittedText = fitText({
-    fontFamily: TheBoldFont,
+    fontFamily: fontFamily,
     text: page.text,
     withinWidth: width * captionStyle.maxWidth,
     textTransform: "uppercase",
@@ -60,7 +60,7 @@ export const CaptionPage: React.FC<{
             scale(interpolate(enterProgress, [0, 1], [0.8, 1])),
             translateY(interpolate(enterProgress, [0, 1], [50, 0])),
           ]),
-          fontFamily: TheBoldFont,
+          fontFamily: fontFamily,
           textTransform: "uppercase",
         }}
       >

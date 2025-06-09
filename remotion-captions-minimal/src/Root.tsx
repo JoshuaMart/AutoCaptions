@@ -16,6 +16,10 @@ export const RemotionRoot: React.FC = () => {
       height={1920}
       defaultProps={{
         src: staticFile("test.mp4"),
+        fontConfig: {
+          family: "Inter",
+          weight: "700",
+        },
         captionStyle: {
           maxWidth: 0.9,
           textColor: "white",
