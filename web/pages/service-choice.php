@@ -143,8 +143,7 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
         <div class="grid md:grid-cols-2 gap-8 mb-8">
             <!-- FFmpeg Service Card -->
             <div class="service-card bg-white rounded-xl shadow-lg p-8 relative border-2 border-transparent transition-all"
-                 data-service="ffmpeg"
-                 onclick="selectService('ffmpeg')">
+                 onclick="selectService(this, 'ffmpeg')">
 
                 <!-- Speed Badge -->
                 <div class="absolute top-4 right-4">
@@ -233,8 +232,7 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
 
             <!-- Remotion Service Card -->
             <div class="service-card bg-white rounded-xl shadow-lg p-8 relative border-2 border-transparent transition-all"
-                 data-service="remotion"
-                 onclick="selectService('remotion')">
+                 onclick="selectService(this, 'remotion')">
 
                 <!-- Creative Badge -->
                 <div class="absolute top-4 right-4">
@@ -369,29 +367,16 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
             console.log('🎯 Service Choice page loaded');
         });
 
-        function selectService(service) {
+        function selectService(cardElem, service) {
             selectedService = service;
 
-            // Update visual selection
+            // Remove selection on all cards
             document.querySelectorAll('.service-card').forEach(card => {
                 card.classList.remove('selected');
-                const border = card.querySelector('.selection-border');
-                if (border) {
-                    border.classList.remove('border-blue-500');
-                    border.classList.add('border-transparent');
-                }
             });
 
-            // Highlight selected card
-            const selectedCard = document.querySelector(`[data-service="${service}"]`);
-            if (selectedCard) {
-                selectedCard.classList.add('selected');
-                const border = selectedCard.querySelector('.selection-border');
-                if (border) {
-                    border.classList.remove('border-transparent');
-                    border.classList.add('border-blue-500');
-                }
-            }
+            // Add selection to the clicked card
+            cardElem.classList.add('selected');
 
             // Enable continue button
             const continueBtn = document.getElementById('continue-btn');
@@ -399,7 +384,6 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
             continueBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
             continueBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
 
-            console.log(`✅ Selected service: ${service}`);
             showNotification('success', 'Service Selected', `${service === 'ffmpeg' ? 'FFmpeg' : 'Remotion'} service selected`);
         }
 
@@ -445,13 +429,13 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
             // 1 or F for FFmpeg
             if (event.key === '1' || event.key.toLowerCase() === 'f') {
                 event.preventDefault();
-                selectService('ffmpeg');
+                selectService(this, 'ffmpeg');
             }
 
             // 2 or R for Remotion
             if (event.key === '2' || event.key.toLowerCase() === 'r') {
                 event.preventDefault();
-                selectService('remotion');
+                selectService(this, 'remotion');
             }
 
             // Enter to continue
