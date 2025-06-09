@@ -1,0 +1,25 @@
+{
+  "name": "remotion-captions-minimal",
+  "version": "1.0.0",
+  "description": "Minimal Remotion project for video captions generation",
+  "scripts": {
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@remotion/animation-utils": "4.0.314",
+    "@remotion/captions": "4.0.314",
+    "@remotion/cli": "4.0.314",
+    "@remotion/google-fonts": "4.0.314",
+    "@remotion/layout-utils": "4.0.314",
+    "@remotion/media-utils": "4.0.314",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.314",
+    "zod": "3.22.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.8.2"
+  },
+  "private": true
+}
