@@ -1,7 +1,8 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import { upload, generateUploadId } from './middleware/upload';
+import { errorHandler } from './middleware/errorHandler';
 import { RenderController } from './controllers/render.controller';
 import config from './config';
 import { initializeDirectories, cleanupOldUploads } from './utils/directories';
@@ -25,32 +26,16 @@ app.post('/render',
 
 app.get('/download/:uploadId', (req, res) => renderController.downloadVideo(req, res));
 
-// Error handling middleware
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', error);
-  
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        error: 'File too large',
-      });
-    }
-  }
-
-  res.status(500).json({
-    success: false,
-    error: error.message || 'Internal server error',
-  });
-});
-
 // 404 handler
-app.use('*', (req: express.Request, res: express.Response) => {
+app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found',
   });
 });
+
+// Error handling middleware (must be last)
+app.use(errorHandler as any);
 
 const PORT = config.server.port;
 
