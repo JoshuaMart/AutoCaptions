@@ -211,7 +211,7 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
         </div>
 
         <!-- Quick Stats -->
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="mt-6 grid grid-cols-1 gap-4" id="stats-container">
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
@@ -254,7 +254,7 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="bg-white rounded-lg shadow p-4" id="confidence-card">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
                         <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,14 +471,30 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
 
             const avgLength = totalDuration / editedCaptions.length;
 
-            const avgConfidence = editedCaptions.reduce((sum, caption) => {
-                return sum + (caption.confidence || 0);
-            }, 0) / editedCaptions.length;
+            // Check if confidence data is available
+            const hasConfidence = editedCaptions.some(caption =>
+                caption.confidence !== undefined && caption.confidence !== null
+            );
+
+            const confidenceCard = document.getElementById('confidence-card');
+            const statsContainer = document.getElementById('stats-container');
+
+            if (hasConfidence) {
+                const avgConfidence = editedCaptions.reduce((sum, caption) => {
+                    return sum + (caption.confidence || 0);
+                }, 0) / editedCaptions.length;
+
+                document.getElementById('stats-confidence').textContent = Math.round(avgConfidence * 100) + '%';
+                confidenceCard.classList.remove('hidden');
+                statsContainer.className = 'mt-6 grid grid-cols-1 md:grid-cols-4 gap-4';
+            } else {
+                confidenceCard.classList.add('hidden');
+                statsContainer.className = 'mt-6 grid grid-cols-1 md:grid-cols-3 gap-4';
+            }
 
             document.getElementById('stats-duration').textContent = Utils.formatDuration(totalDuration);
             document.getElementById('stats-words').textContent = totalWords;
             document.getElementById('stats-avg-length').textContent = avgLength.toFixed(1) + 's';
-            document.getElementById('stats-confidence').textContent = Math.round(avgConfidence * 100) + '%';
         }
 
         function initializeEditor() {
