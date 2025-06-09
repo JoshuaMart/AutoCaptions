@@ -359,8 +359,8 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
     <?php include "../components/settings-modal.php"; ?>
 
     <!-- JavaScript -->
-    <script src="../assets/js/api.js"></script>
     <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
     <script>
         let selectedService = null;
 
