@@ -1,4 +1,4 @@
-![Auto Captions](https://github.com/user-attachments/assets/68e17f05-8b26-4b19-9ae0-2bd719da77aa)
+![Auto Captions](./assets/banner.png)
 
 A comprehensive microservices-based solution for automatic video captioning, designed for 9:16 format videos (shorts). The system consists of four independent services that can be used together or separately, with a modern web interface for easy interaction.
 
