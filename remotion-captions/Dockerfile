@@ -47,6 +47,9 @@ RUN cd remotion && \
 
 COPY . .
 
+# Build the application
+RUN npm run build
+
 ENV REMOTION_CHROME_BINARY /usr/bin/google-chrome-stable
 
 # Start the application
