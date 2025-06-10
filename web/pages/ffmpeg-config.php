@@ -952,6 +952,12 @@ if ($selectedService !== "ffmpeg") {
                return;
            }
 
+           const uploadId = sessionStorage.getItem('uploadId');
+           if (!uploadId) {
+               showNotification('error', 'No Video', 'No video file found. Please upload a video first.');
+               return;
+           }
+
            const generateBtn = document.getElementById('generate-btn');
            const originalText = generateBtn.innerHTML;
 
@@ -961,7 +967,7 @@ if ($selectedService !== "ffmpeg") {
                <svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                </svg>
-               Generating Video...
+               Preparing Generation...
            `;
 
            try {
@@ -972,17 +978,25 @@ if ($selectedService !== "ffmpeg") {
                    transcriptionData: transcriptionData
                };
 
+               // Validate configuration
+               if (!config.transcriptionData || !config.transcriptionData.transcription || 
+                   !config.transcriptionData.transcription.captions || 
+                   config.transcriptionData.transcription.captions.length === 0) {
+                   throw new Error('Invalid transcription data');
+               }
+
+               console.log('🎬 Starting video generation with config:', {
+                   preset: config.preset,
+                   captionsCount: config.transcriptionData.transcription.captions.length,
+                   service: 'ffmpeg',
+                   uploadId: uploadId
+               });
+
                // Save configuration for result page
                sessionStorage.setItem('finalConfig', JSON.stringify(config));
                sessionStorage.setItem('selectedService', 'ffmpeg');
 
-               fetch('/api/save-session.php', {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ selected_service: selectedService })
-               });
-
-               showNotification('success', 'Starting Generation', 'Redirecting to generation page...');
+               showNotification('success', 'Configuration Ready', 'Redirecting to generation page...');
 
                // Redirect to result page
                setTimeout(() => {
@@ -990,8 +1004,8 @@ if ($selectedService !== "ffmpeg") {
                }, 1500);
 
            } catch (error) {
-               console.error('❌ Failed to start generation:', error);
-               showNotification('error', 'Generation Failed', error.message);
+               console.error('❌ Failed to prepare generation:', error);
+               showNotification('error', 'Preparation Failed', error.message);
 
                // Restore button state
                generateBtn.disabled = false;
