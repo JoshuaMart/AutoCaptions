@@ -2,6 +2,8 @@
 
 A modern web interface for the AutoCaptions microservices ecosystem. Built with PHP and vanilla JavaScript, providing an intuitive user experience for video caption generation.
 
+⚠️ **Development Notice**: This web interface is a proof-of-concept MVP and is not intended for production use. The code quality is rough and serves solely as a demonstration layer for interacting with the backend services.
+
 ## 🎯 Overview
 
 The web interface serves as the frontend orchestrator for all AutoCaptions services, offering:
