@@ -11,57 +11,62 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Default service URLs
 $defaultServices = [
-    'transcriptions' => [
-        'name' => 'Transcriptions',
-        'url' => 'http://localhost:3001',
-        'health_endpoint' => '/api/health',
-        'description' => 'Audio/video transcription service'
+    "transcriptions" => [
+        "name" => "Transcriptions",
+        "url" => "http://transcriptions:3001",
+        "health_endpoint" => "/api/health",
+        "description" => "Audio/video transcription service",
     ],
-    'ffmpeg_captions' => [
-        'name' => 'FFmpeg Captions',
-        'url' => 'http://localhost:3002',
-        'health_endpoint' => '/api/captions/health',
-        'description' => 'Fast subtitle generation with FFmpeg'
+    "ffmpeg_captions" => [
+        "name" => "FFmpeg Captions",
+        "url" => "http://ffmpeg-captions:3002",
+        "health_endpoint" => "/api/captions/health",
+        "description" => "Fast subtitle generation with FFmpeg",
     ],
-    'remotion_captions' => [
-        'name' => 'Remotion Captions',
-        'url' => 'http://localhost:3003',
-        'health_endpoint' => '/health',
-        'description' => 'Advanced video captions with Remotion'
-    ]
+    "remotion_captions" => [
+        "name" => "Remotion Captions",
+        "url" => "http://remotion-captions:3003",
+        "health_endpoint" => "/health",
+        "description" => "Advanced video captions with Remotion",
+    ],
 ];
 
 // Get services configuration from session or use defaults
-function getServicesConfig() {
+function getServicesConfig()
+{
     global $defaultServices;
-    
-    if (isset($_SESSION['services_config'])) {
-        return $_SESSION['services_config'];
+
+    if (isset($_SESSION["services_config"])) {
+        return $_SESSION["services_config"];
     }
-    
+
     return $defaultServices;
 }
 
 // Update services configuration
-function updateServicesConfig($services) {
-    $_SESSION['services_config'] = $services;
+function updateServicesConfig($services)
+{
+    $_SESSION["services_config"] = $services;
     return true;
 }
 
 // Get specific service URL
-function getServiceUrl($serviceName) {
+function getServiceUrl($serviceName)
+{
     $services = getServicesConfig();
-    return $services[$serviceName]['url'] ?? null;
+    return $services[$serviceName]["url"] ?? null;
 }
 
 // Validate service URL format
-function isValidServiceUrl($url) {
+function isValidServiceUrl($url)
+{
     return filter_var($url, FILTER_VALIDATE_URL) !== false;
 }
 
 // Reset to default configuration
-function resetServicesConfig() {
+function resetServicesConfig()
+{
     global $defaultServices;
-    $_SESSION['services_config'] = $defaultServices;
+    $_SESSION["services_config"] = $defaultServices;
     return true;
 }
