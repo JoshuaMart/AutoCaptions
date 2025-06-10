@@ -69,6 +69,19 @@ if ($selectedService !== "ffmpeg") {
         .font-preview:hover {
             transform: scale(1.02);
         }
+
+        .field-group {
+            transition: all 0.3s ease;
+        }
+
+        .field-group.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .field-group.hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -146,152 +159,17 @@ if ($selectedService !== "ffmpeg") {
                     </div>
                 </div>
 
-                <!-- Font Configuration -->
-                <div class="config-section bg-white rounded-lg shadow">
-                    <div class="p-6 border-b border-gray-200">
-                        <button type="button" onclick="toggleSection('font-section')" class="w-full flex items-center justify-between">
-                            <h3 class="text-lg font-medium text-gray-900">Font Settings</h3>
-                            <svg class="w-5 h-5 text-gray-500 transform transition-transform section-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                <!-- Dynamic Configuration Container -->
+                <div id="dynamic-config-container">
+                    <!-- Configuration sections will be dynamically generated here -->
+                    <div id="no-preset-message" class="bg-white rounded-lg shadow p-8 text-center">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
                             </svg>
-                        </button>
-                    </div>
-
-                    <div id="font-section" class="section-content p-6">
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
-                                <select id="fontFamily" onchange="updatePreview()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Loading fonts...</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Font Size</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="range" id="fontSize" min="40" max="150" value="80" onchange="updatePreview(); updateRangeValue('fontSize')" class="flex-1">
-                                    <span id="fontSize-value" class="text-sm text-gray-600 w-12">80px</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Font Weight</label>
-                                <select id="fontWeight" onchange="updatePreview()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="400">Normal (400)</option>
-                                    <option value="500">Medium (500)</option>
-                                    <option value="600">Semi Bold (600)</option>
-                                    <option value="700" selected>Bold (700)</option>
-                                    <option value="800">Extra Bold (800)</option>
-                                    <option value="900">Black (900)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Text Transform</label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" id="uppercase" onchange="updatePreview()" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">UPPERCASE</span>
-                                </label>
-                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Colors Configuration -->
-                <div class="config-section bg-white rounded-lg shadow">
-                    <div class="p-6 border-b border-gray-200">
-                        <button type="button" onclick="toggleSection('colors-section')" class="w-full flex items-center justify-between">
-                            <h3 class="text-lg font-medium text-gray-900">Colors & Effects</h3>
-                            <svg class="w-5 h-5 text-gray-500 transform transition-transform section-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="colors-section" class="section-content p-6">
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <!-- Text Colors -->
-                            <div class="space-y-4">
-                                <h4 class="font-medium text-gray-900">Text Colors</h4>
-
-                                <div class="flex items-center space-x-3">
-                                    <label class="text-sm text-gray-700 w-20">Text:</label>
-                                    <input type="color" id="textColor" value="#ffffff" onchange="updatePreview()" class="color-input">
-                                    <input type="text" id="textColorHex" value="FFFFFF" onchange="updateColorFromHex('textColor', this.value); updatePreview()" class="px-2 py-1 border border-gray-300 rounded text-sm w-20">
-                                </div>
-
-                                <div class="flex items-center space-x-3">
-                                    <label class="text-sm text-gray-700 w-20">Outline:</label>
-                                    <input type="color" id="outlineColor" value="#000000" onchange="updatePreview()" class="color-input">
-                                    <input type="text" id="outlineColorHex" value="000000" onchange="updateColorFromHex('outlineColor', this.value); updatePreview()" class="px-2 py-1 border border-gray-300 rounded text-sm w-20">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm text-gray-700 mb-2">Outline Width</label>
-                                    <div class="flex items-center space-x-3">
-                                        <input type="range" id="outlineWidth" min="0" max="10" value="4" onchange="updatePreview(); updateRangeValue('outlineWidth')" class="flex-1">
-                                        <span id="outlineWidth-value" class="text-sm text-gray-600 w-8">4px</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Active Word Colors -->
-                            <div class="space-y-4">
-                                <h4 class="font-medium text-gray-900">Active Word</h4>
-
-                                <div class="flex items-center space-x-3">
-                                    <label class="text-sm text-gray-700 w-20">Color:</label>
-                                    <input type="color" id="activeWordColor" value="#ffff00" onchange="updatePreview()" class="color-input">
-                                    <input type="text" id="activeWordColorHex" value="FFFF00" onchange="updateColorFromHex('activeWordColor', this.value); updatePreview()" class="px-2 py-1 border border-gray-300 rounded text-sm w-20">
-                                </div>
-
-                                <div class="flex items-center space-x-3">
-                                    <label class="text-sm text-gray-700 w-20">Outline:</label>
-                                    <input type="color" id="activeWordOutlineColor" value="#000000" onchange="updatePreview()" class="color-input">
-                                    <input type="text" id="activeWordOutlineColorHex" value="000000" onchange="updateColorFromHex('activeWordOutlineColor', this.value); updatePreview()" class="px-2 py-1 border border-gray-300 rounded text-sm w-20">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm text-gray-700 mb-2">Font Size</label>
-                                    <div class="flex items-center space-x-3">
-                                        <input type="range" id="activeWordFontSize" min="40" max="200" value="85" onchange="updatePreview(); updateRangeValue('activeWordFontSize')" class="flex-1">
-                                        <span id="activeWordFontSize-value" class="text-sm text-gray-600 w-12">85px</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Position Configuration -->
-                <div class="config-section bg-white rounded-lg shadow">
-                    <div class="p-6 border-b border-gray-200">
-                        <button type="button" onclick="toggleSection('position-section')" class="w-full flex items-center justify-between">
-                            <h3 class="text-lg font-medium text-gray-900">Position & Layout</h3>
-                            <svg class="w-5 h-5 text-gray-500 transform transition-transform section-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="position-section" class="section-content p-6">
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Base Position</label>
-                                <select id="position" onchange="updatePreview()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="top">Top</option>
-                                    <option value="center" selected>Center</option>
-                                    <option value="bottom">Bottom</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm text-gray-700 mb-2">Position Offset</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="range" id="positionOffset" min="-500" max="500" value="300" onchange="updatePreview(); updateRangeValue('positionOffset')" class="flex-1">
-                                    <span id="positionOffset-value" class="text-sm text-gray-600 w-12">300px</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">+ moves down, - moves up</p>
-                            </div>
-                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Select a Preset</h3>
+                        <p class="text-gray-600">Choose a preset above to configure your caption style options.</p>
                     </div>
                 </div>
 
@@ -309,7 +187,8 @@ if ($selectedService !== "ffmpeg") {
                     <button type="button"
                             onclick="generateFinalVideo()"
                             id="generate-btn"
-                            class="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            class="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
@@ -326,7 +205,8 @@ if ($selectedService !== "ffmpeg") {
                         <button type="button"
                                 onclick="generatePreview()"
                                 id="preview-btn"
-                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200">
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
@@ -342,7 +222,7 @@ if ($selectedService !== "ffmpeg") {
                                 <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                 </svg>
-                                <p class="text-sm">Click "Generate Preview"<br>to see your captions</p>
+                                <p class="text-sm">Select a preset and click<br>"Generate Preview"</p>
                             </div>
                         </div>
 
@@ -381,8 +261,9 @@ if ($selectedService !== "ffmpeg") {
     <script src="../assets/js/api.js"></script>
     <script>
         // Global variables
-        let currentPreset = 'custom';
-        let availablePresets = {};
+        let currentPreset = null;
+        let currentPresetDetails = null;
+        let availablePresets = [];
         let availableFonts = [];
         let transcriptionData = null;
         let selectedService = 'ffmpeg';
@@ -393,7 +274,6 @@ if ($selectedService !== "ffmpeg") {
             loadTranscriptionData();
             loadPresets();
             loadFonts();
-            initializeRangeValues();
         });
 
         function loadTranscriptionData() {
@@ -431,25 +311,10 @@ if ($selectedService !== "ffmpeg") {
 
         async function loadPresets() {
             try {
-                // Premier appel : liste des presets
                 const result = await API.call('ffmpeg_captions', 'api/captions/presets', 'GET');
 
                 if (result.success && result.presets) {
                     availablePresets = result.presets;
-
-                    // Charger les détails de chaque preset
-                    for (let preset of availablePresets) {
-                        try {
-                            const detailResult = await API.call('ffmpeg_captions', `api/captions/presets/${preset.name}`, 'GET');
-                            if (detailResult.success && detailResult.preset) {
-                                // Merge les détails dans le preset
-                                Object.assign(preset, detailResult.preset);
-                            }
-                        } catch (error) {
-                            console.warn(`Failed to load details for preset ${preset.name}:`, error);
-                        }
-                    }
-
                     renderPresets();
                     document.getElementById('presets-loading').classList.add('hidden');
                     document.getElementById('presets-list').classList.remove('hidden');
@@ -473,7 +338,7 @@ if ($selectedService !== "ffmpeg") {
                     <h4 class="font-medium text-gray-900">${preset.displayName}</h4>
                     <p class="text-sm text-gray-600 mt-1">${preset.description}</p>
                     <div class="mt-2 text-xs text-gray-500">
-                        ${preset.customizable ? preset.customizable.length : 0} customizable options
+                        Click to configure options
                     </div>
                 </div>
             `).join('');
@@ -483,18 +348,7 @@ if ($selectedService !== "ffmpeg") {
             availablePresets = [{
                 name: 'custom',
                 displayName: 'Custom',
-                description: 'Fully customizable caption style',
-                defaults: {
-                    fontFamily: 'Inter',
-                    fontSize: 80,
-                    fontWeight: 700,
-                    textColor: 'FFFFFF',
-                    outlineColor: '000000',
-                    outlineWidth: 4,
-                    activeWordColor: 'FFFF00',
-                    position: 'center',
-                    positionOffset: 300
-                }
+                description: 'Fully customizable caption style'
             }];
             renderPresets();
             document.getElementById('presets-loading').classList.add('hidden');
@@ -507,7 +361,6 @@ if ($selectedService !== "ffmpeg") {
 
                 if (result.success && result.fonts) {
                     availableFonts = result.fonts;
-                    renderFonts();
                 } else {
                     throw new Error('Failed to load fonts');
                 }
@@ -517,28 +370,16 @@ if ($selectedService !== "ffmpeg") {
             }
         }
 
-        function renderFonts() {
-            const select = document.getElementById('fontFamily');
-            select.innerHTML = availableFonts.map(font =>
-                `<option value="${font.family}">${font.family}</option>`
-            ).join('');
-
-            // Set default font
-            select.value = 'Inter';
-        }
-
         function showDefaultFonts() {
-            const select = document.getElementById('fontFamily');
-            select.innerHTML = `
-                <option value="Inter">Inter</option>
-                <option value="Arial Black">Arial Black</option>
-                <option value="Montserrat">Montserrat</option>
-                <option value="Roboto">Roboto</option>
-            `;
-            select.value = 'Inter';
+            availableFonts = [
+                { family: 'Inter', variants: ['400', '600', '700', '800'], category: 'sans-serif' },
+                { family: 'Arial Black', variants: ['400'], category: 'sans-serif' },
+                { family: 'Montserrat', variants: ['400', '600', '700', '800'], category: 'sans-serif' },
+                { family: 'Roboto', variants: ['400', '500', '700'], category: 'sans-serif' }
+            ];
         }
 
-        function selectPreset(presetName) {
+        async function selectPreset(presetName) {
             currentPreset = presetName;
 
             // Update visual selection
@@ -553,514 +394,665 @@ if ($selectedService !== "ffmpeg") {
                 selectedCard.classList.add('border-blue-500', 'bg-blue-50');
             }
 
-            // Load preset defaults and show/hide customizable options
-            const preset = availablePresets.find(p => p.name === presetName);
-            if (preset) {
-                if (preset.defaults) {
-                    applyPresetDefaults(preset.defaults);
+            // Show loading in config container
+            const configContainer = document.getElementById('dynamic-config-container');
+            configContainer.innerHTML = `
+                <div class="bg-white rounded-lg shadow p-8 text-center">
+                    <div class="animate-spin mx-auto h-8 w-8 text-blue-600 mb-4">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-600">Loading preset configuration...</p>
+                </div>
+            `;
+
+            try {
+                // Load preset details from API
+                const result = await API.call('ffmpeg_captions', `api/captions/presets/${presetName}`, 'GET');
+
+                if (result.success && result.preset) {
+                    currentPresetDetails = result.preset;
+                    generateConfigurationInterface(result.preset);
+
+                    // Enable buttons
+                    document.getElementById('preview-btn').disabled = false;
+                    document.getElementById('generate-btn').disabled = false;
+
+                    console.log(`✅ Preset '${presetName}' loaded with ${result.preset.customizable?.length || 0} customizable options`);
+                    showNotification('success', 'Preset Loaded', `${result.preset.displayName} configuration loaded`);
+                } else {
+                    throw new Error('Failed to load preset details');
                 }
-
-                // Show/hide customizable sections
-                updateCustomizableInterface(preset.customizable || []);
+            } catch (error) {
+                console.error('❌ Failed to load preset details:', error);
+                showNotification('error', 'Loading Failed', 'Could not load preset configuration');
+                showNoPresetMessage();
             }
-
-            console.log(`✅ Selected preset: ${presetName}`);
-            showNotification('success', 'Preset Selected', `Applied ${preset?.displayName || presetName} preset`);
         }
 
-        function updateCustomizableInterface(customizableOptions) {
-            // Mapping des options vers les sections/éléments
-            const optionMapping = {
-                // Font section
-                'fontFamily': 'font-section',
-                'fontSize': 'font-section',
-                'fontWeight': 'font-section',
-                'uppercase': 'font-section',
+        function generateConfigurationInterface(preset) {
+            const container = document.getElementById('dynamic-config-container');
 
-                // Colors section
-                'textColor': 'colors-section',
-                'outlineColor': 'colors-section',
-                'outlineWidth': 'colors-section',
-                'activeWordColor': 'colors-section',
-                'activeWordOutlineColor': 'colors-section',
-                'activeWordFontSize': 'colors-section',
-                'shadowColor': 'colors-section',
-                'shadowOpacity': 'colors-section',
-                'activeWordShadowColor': 'colors-section',
-                'activeWordShadowOpacity': 'colors-section',
+            if (!preset.customizable || preset.customizable.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-lg shadow p-8 text-center">
+                        <div class="text-green-500 mb-4">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Preset Ready</h3>
+                        <p class="text-gray-600 mb-4">This preset has predefined settings and doesn't require configuration.</p>
+                        <p class="text-sm text-gray-500">You can generate a preview or proceed directly to video generation.</p>
+                    </div>
+                `;
+                return;
+            }
 
-                // Position section
-                'position': 'position-section',
-                'positionOffset': 'position-section',
-                'backgroundColor': 'position-section',
-                'backgroundOpacity': 'position-section'
+            // Group customizable options by category
+            const groups = groupCustomizableOptions(preset.customizable);
+
+            let sectionsHTML = '';
+
+            for (const [groupName, options] of Object.entries(groups)) {
+                if (options.length === 0) continue;
+
+                const sectionId = `${groupName.toLowerCase().replace(/\s+/g, '-')}-section`;
+
+                sectionsHTML += `
+                    <div class="config-section bg-white rounded-lg shadow">
+                        <div class="p-6 border-b border-gray-200">
+                            <button type="button" onclick="toggleSection('${sectionId}')" class="w-full flex items-center justify-between">
+                                <h3 class="text-lg font-medium text-gray-900">${groupName}</h3>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform section-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="${sectionId}" class="section-content p-6">
+                            <div class="grid md:grid-cols-2 gap-6">
+                                ${generateFieldsHTML(options, preset.defaults)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = sectionsHTML;
+
+            // Apply default values
+            applyPresetDefaults(preset.defaults);
+
+            // Initialize range values and event listeners
+            initializeFormElements();
+        }
+
+        function groupCustomizableOptions(customizableOptions) {
+            const groups = {
+                'Font Settings': [],
+                'Colors & Effects': [],
+                'Position & Layout': [],
+                'Background & Shadows': [],
+                'Other Settings': []
             };
 
-            // Get customizable keys
-            const customizableKeys = customizableOptions.map(option => option.key);
+            customizableOptions.forEach(option => {
+                const key = option.key.toLowerCase();
 
-            // Show/hide individual controls
-            Object.keys(optionMapping).forEach(optionKey => {
-                const element = document.getElementById(optionKey);
-                const container = element?.closest('.grid > div, .space-y-4 > div, .flex');
-
-                if (container) {
-                    if (customizableKeys.includes(optionKey)) {
-                        container.style.display = '';
-                        container.classList.remove('opacity-50', 'pointer-events-none');
-                    } else {
-                        // Option not customizable - disable but keep visible
-                        container.classList.add('opacity-50', 'pointer-events-none');
-
-                        // Or hide completely:
-                        // container.style.display = 'none';
-                    }
+                if (key.includes('font') || key.includes('weight') || key === 'uppercase') {
+                    groups['Font Settings'].push(option);
+                } else if (key.includes('color') || key.includes('outline') || key.includes('activeword')) {
+                    groups['Colors & Effects'].push(option);
+                } else if (key.includes('position') || key.includes('offset')) {
+                    groups['Position & Layout'].push(option);
+                } else if (key.includes('background') || key.includes('shadow')) {
+                    groups['Background & Shadows'].push(option);
+                } else {
+                    groups['Other Settings'].push(option);
                 }
             });
 
-            // Show/hide entire sections if no customizable options
-            const sections = ['font-section', 'colors-section', 'position-section'];
-
-            sections.forEach(sectionId => {
-                const hasCustomizableInSection = customizableKeys.some(key =>
-                    optionMapping[key] === sectionId
-                );
-
-                const sectionElement = document.getElementById(sectionId);
-                const sectionContainer = sectionElement?.closest('.config-section');
-
-                if (sectionContainer) {
-                    if (hasCustomizableInSection) {
-                        sectionContainer.style.display = '';
-                        sectionContainer.classList.remove('opacity-50');
-                    } else {
-                        // Hide section completely or disable it
-                        sectionContainer.classList.add('opacity-50');
-                        // ou : sectionContainer.style.display = 'none';
-                    }
+            // Remove empty groups
+            Object.keys(groups).forEach(key => {
+                if (groups[key].length === 0) {
+                    delete groups[key];
                 }
             });
 
-            console.log(`🎨 Updated interface for ${customizableKeys.length} customizable options`);
+            return groups;
+        }
+
+        function generateFieldsHTML(options, defaults) {
+            return options.map(option => {
+                const defaultValue = defaults?.[option.key] || '';
+
+                switch (option.type) {
+                    case 'font':
+                        return generateFontField(option, defaultValue);
+                    case 'number':
+                        return generateNumberField(option, defaultValue);
+                    case 'color':
+                        return generateColorField(option, defaultValue);
+                    case 'select':
+                        return generateSelectField(option, defaultValue);
+                    case 'boolean':
+                        return generateBooleanField(option, defaultValue);
+                    default:
+                        return generateTextField(option, defaultValue);
+                }
+            }).join('');
+        }
+
+        function generateFontField(option, defaultValue) {
+            const fontOptions = availableFonts.map(font =>
+                `<option value="${font.family}" ${font.family === defaultValue ? 'selected' : ''}>${font.family}</option>`
+            ).join('');
+
+            return `
+                <div class="field-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
+                    <select id="${option.key}" onchange="updatePreview()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        ${fontOptions || '<option value="Inter">Inter</option>'}
+                    </select>
+                </div>
+            `;
+        }
+
+        function generateNumberField(option, defaultValue) {
+            const min = option.min || 0;
+            const max = option.max || 100;
+            const value = defaultValue || min;
+
+            return `
+                <div class="field-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
+                    <div class="flex items-center space-x-3">
+                        <input type="range" id="${option.key}" min="${min}" max="${max}" value="${value}"
+                               onchange="updatePreview(); updateRangeValue('${option.key}')" class="flex-1">
+                        <span id="${option.key}-value" class="text-sm text-gray-600 w-16">${value}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateColorField(option, defaultValue) {
+            const hexValue = defaultValue || 'FFFFFF';
+            const colorValue = '#' + hexValue;
+
+            return `
+                <div class="field-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
+                    <div class="flex items-center space-x-3">
+                        <input type="color" id="${option.key}" value="${colorValue}" onchange="syncColorField('${option.key}'); updatePreview()" class="color-input">
+                        <input type="text" id="${option.key}Hex" value="${hexValue}" onchange="syncHexField('${option.key}'); updatePreview()"
+                               class="px-2 py-1 border border-gray-300 rounded text-sm w-20" maxlength="6" placeholder="FFFFFF">
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSelectField(option, defaultValue) {
+            const options = option.options || [];
+            const optionsHTML = options.map(opt =>
+                `<option value="${opt}" ${opt === defaultValue ? 'selected' : ''}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`
+            ).join('');
+
+            return `
+                <div class="field-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
+                    <select id="${option.key}" onchange="updatePreview()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        ${optionsHTML}
+                    </select>
+                </div>
+            `;
+        }
+
+        function generateBooleanField(option, defaultValue) {
+            const checked = defaultValue ? 'checked' : '';
+
+            return `
+                <div class="field-group">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="${option.key}" onchange="updatePreview()" ${checked} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm font-medium text-gray-700">${option.label}</span>
+                    </label>
+                </div>
+            `;
+        }
+
+        function generateTextField(option, defaultValue) {
+            return `
+                <div class="field-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
+                    <input type="text" id="${option.key}" value="${defaultValue || ''}" onchange="updatePreview()"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            `;
         }
 
         function applyPresetDefaults(defaults) {
-           Object.keys(defaults).forEach(key => {
-               const element = document.getElementById(key);
-               if (element) {
-                   if (element.type === 'checkbox') {
-                       element.checked = defaults[key];
-                   } else if (element.type === 'color') {
-                       element.value = '#' + defaults[key];
-                       // Update hex input too
-                       const hexInput = document.getElementById(key + 'Hex');
-                       if (hexInput) hexInput.value = defaults[key];
-                   } else {
-                       element.value = defaults[key];
-                   }
+            if (!defaults) return;
 
-                   // Update range value displays
-                   updateRangeValue(key);
-               }
-           });
+            Object.keys(defaults).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = defaults[key];
+                    } else if (element.type === 'color') {
+                        element.value = '#' + defaults[key];
+                        // Update hex input too
+                        const hexInput = document.getElementById(key + 'Hex');
+                        if (hexInput) hexInput.value = defaults[key];
+                    } else {
+                        element.value = defaults[key];
+                    }
+                    // Update range value displays
+                    updateRangeValue(key);
+                }
+            });
+        }
 
-           updatePreview();
-       }
+        function initializeFormElements() {
+            // Initialize all range value displays
+            document.querySelectorAll('input[type="range"]').forEach(range => {
+                updateRangeValue(range.id);
+            });
 
-       function initializeRangeValues() {
-           // Initialize all range value displays
-           ['fontSize', 'outlineWidth', 'activeWordFontSize', 'positionOffset'].forEach(id => {
-               updateRangeValue(id);
-           });
-       }
+            // Initialize color field synchronization
+            document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+                const key = colorInput.id;
+                const hexInput = document.getElementById(key + 'Hex');
 
-       function updateRangeValue(inputId) {
-           const input = document.getElementById(inputId);
-           const display = document.getElementById(inputId + '-value');
+                if (hexInput) {
+                    colorInput.addEventListener('input', function() {
+                        hexInput.value = this.value.substring(1).toUpperCase();
+                        updatePreview();
+                    });
 
-           if (input && display) {
-               const unit = inputId.includes('Offset') ? 'px' : (inputId.includes('Size') ? 'px' : (inputId.includes('Width') ? 'px' : ''));
-               display.textContent = input.value + unit;
-           }
-       }
+                    hexInput.addEventListener('input', function() {
+                        const hex = this.value.replace('#', '').substring(0, 6);
+                        if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
+                            colorInput.value = '#' + hex;
+                            updatePreview();
+                        }
+                    });
+                }
+            });
+        }
 
-       function updateColorFromHex(colorInputId, hexValue) {
-           const colorInput = document.getElementById(colorInputId);
-           if (colorInput) {
-               // Remove # if present and ensure 6 characters
-               hexValue = hexValue.replace('#', '').substring(0, 6);
-               colorInput.value = '#' + hexValue;
-           }
-       }
+        function updateRangeValue(inputId) {
+            const input = document.getElementById(inputId);
+            const display = document.getElementById(inputId + '-value');
 
-       function toggleSection(sectionId) {
-           const section = document.getElementById(sectionId).parentElement;
-           const arrow = section.querySelector('.section-arrow');
+            if (input && display) {
+                let unit = '';
+                if (inputId.toLowerCase().includes('size') || inputId.toLowerCase().includes('width') || inputId.toLowerCase().includes('offset')) {
+                    unit = 'px';
+                } else if (inputId.toLowerCase().includes('opacity')) {
+                    unit = '%';
+                }
+                display.textContent = input.value + unit;
+            }
+        }
 
-           section.classList.toggle('collapsed');
-           arrow.style.transform = section.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
-       }
+        function syncColorField(key) {
+            const colorInput = document.getElementById(key);
+            const hexInput = document.getElementById(key + 'Hex');
 
-       function updatePreview() {
-           // This function could show a live CSS preview in the future
-           console.log('🎨 Preview updated with current settings');
-       }
+            if (colorInput && hexInput) {
+                hexInput.value = colorInput.value.substring(1).toUpperCase();
+            }
+        }
 
-       async function generatePreview() {
-           if (!transcriptionData) {
-               showNotification('error', 'No Data', 'No transcription data available for preview');
-               return;
-           }
+        function syncHexField(key) {
+            const colorInput = document.getElementById(key);
+            const hexInput = document.getElementById(key + 'Hex');
 
-           // Check if we have a saved video file
-           const uploadId = sessionStorage.getItem('uploadId');
-           if (!uploadId) {
-               showNotification('warning', 'No Video File', 'Using demo preview. Upload a video for real preview.');
-               showDemoPreview();
-               return;
-           }
+            if (colorInput && hexInput) {
+                const hex = hexInput.value.replace('#', '').substring(0, 6);
+                if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
+                    colorInput.value = '#' + hex;
+                }
+            }
+        }
 
-           const previewBtn = document.getElementById('preview-btn');
-           const placeholder = document.getElementById('preview-placeholder');
-           const loading = document.getElementById('preview-loading');
-           const image = document.getElementById('preview-image');
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId).parentElement;
+            const arrow = section.querySelector('.section-arrow');
 
-           // Show loading state
-           placeholder.classList.add('hidden');
-           image.classList.add('hidden');
-           loading.classList.remove('hidden');
+            section.classList.toggle('collapsed');
+            arrow.style.transform = section.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
 
-           previewBtn.disabled = true;
-           previewBtn.innerHTML = `
-               <svg class="animate-spin w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-               </svg>
-               Generating...
-           `;
+        function updatePreview() {
+            console.log('🎨 Preview updated with current settings');
+        }
 
-           try {
-               // Prepare configuration
-               const config = {
-                   preset: currentPreset,
-                   customStyle: getCurrentConfiguration(),
-                   transcriptionData: transcriptionData
-               };
+        function showNoPresetMessage() {
+            const container = document.getElementById('dynamic-config-container');
+            container.innerHTML = `
+                <div id="no-preset-message" class="bg-white rounded-lg shadow p-8 text-center">
+                    <div class="text-red-400 mb-4">
+                        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Configuration Error</h3>
+                    <p class="text-gray-600 mb-4">Unable to load preset configuration. Please try selecting a different preset.</p>
+                    <button onclick="refreshPresets()" class="text-blue-600 hover:text-blue-800 font-medium">Refresh Presets</button>
+                </div>
+            `;
+        }
 
-               console.log('🎬 Generating preview with config:', config);
+        function getCurrentConfiguration() {
+            if (!currentPresetDetails) return {};
 
-               // Prepare form data for direct API call
-               const formData = new FormData();
-               formData.append('uploadId', uploadId);
-               formData.append('data', JSON.stringify(config));
+            const config = { ...currentPresetDetails.defaults };
 
-               // Make direct API call to preview endpoint
-               const response = await fetch('/api/direct-preview.php?position=middle', {
-                   method: 'POST',
-                   body: formData
-               });
+            // Override with current form values
+            if (currentPresetDetails.customizable) {
+                currentPresetDetails.customizable.forEach(option => {
+                    const element = document.getElementById(option.key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            config[option.key] = element.checked;
+                        } else if (element.type === 'color') {
+                            const hexInput = document.getElementById(option.key + 'Hex');
+                            config[option.key] = hexInput ? hexInput.value : element.value.substring(1);
+                        } else {
+                            config[option.key] = element.type === 'number' || element.type === 'range' ?
+                                parseFloat(element.value) : element.value;
+                        }
+                    }
+                });
+            }
 
-               console.log('📡 Preview response status:', response.status);
-               console.log('📡 Preview response content type:', response.headers.get('Content-Type'));
+            return config;
+        }
 
-               if (!response.ok) {
-                   // Try to get error message from response
-                   const contentType = response.headers.get('Content-Type');
-                   let errorMessage = 'Preview generation failed';
+        async function generatePreview() {
+            if (!transcriptionData) {
+                showNotification('error', 'No Data', 'No transcription data available for preview');
+                return;
+            }
 
-                   if (contentType && contentType.includes('application/json')) {
-                       const errorData = await response.json();
-                       errorMessage = errorData.error || errorMessage;
-                   } else {
-                       const errorText = await response.text();
-                       console.error('Preview error response:', errorText);
+            if (!currentPreset) {
+                showNotification('warning', 'No Preset', 'Please select a preset first');
+                return;
+            }
 
-                       // Try to parse as JSON in case of wrong content type
-                       try {
-                           const errorJson = JSON.parse(errorText);
-                           errorMessage = errorJson.error || errorMessage;
-                       } catch (e) {
-                           errorMessage = errorText || errorMessage;
-                       }
-                   }
+            // Check if we have a saved video file
+            const uploadId = sessionStorage.getItem('uploadId');
+            if (!uploadId) {
+                showNotification('warning', 'No Video File', 'Using demo preview. Upload a video for real preview.');
+                showDemoPreview();
+                return;
+            }
 
-                   throw new Error(errorMessage);
-               }
+            const previewBtn = document.getElementById('preview-btn');
+            const placeholder = document.getElementById('preview-placeholder');
+            const loading = document.getElementById('preview-loading');
+            const image = document.getElementById('preview-image');
 
-               // Check response content type
-               const contentType = response.headers.get('Content-Type');
-               console.log('✅ Preview response content type:', contentType);
+            // Show loading state
+            placeholder.classList.add('hidden');
+            image.classList.add('hidden');
+            loading.classList.remove('hidden');
 
-               if (contentType && contentType.startsWith('image/')) {
-                   // Success - display the preview image
-                   const imageBlob = await response.blob();
-                   
-                   console.log('🖼️ Image blob size:', imageBlob.size, 'bytes');
-                   
-                   // Convert blob to Data URL instead of using blob URL
-                   const reader = new FileReader();
-                   reader.onload = function(e) {
-                       console.log('✅ Image converted to Data URL');
-                       
-                       // Set the Data URL as source
-                       image.src = e.target.result;
-                       
-                       // Force display immediately
-                       loading.classList.add('hidden');
-                       image.classList.remove('hidden');
-                       
-                       console.log('✅ Preview image displayed successfully');
-                   };
-                   
-                   reader.onerror = function(e) {
-                       console.error('❌ Failed to convert image to Data URL:', e);
-                       showNotification('error', 'Image Processing Failed', 'Could not process preview image');
-                       showDemoPreview();
-                   };
-                   
-                   // Start conversion
-                   reader.readAsDataURL(imageBlob);
-                   
-                   showNotification('success', 'Preview Generated', 'Real caption preview ready');
+            previewBtn.disabled = true;
+            previewBtn.innerHTML = `
+                <svg class="animate-spin w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Generating...
+            `;
 
-               } else {
-                   // Unexpected response type
-                   console.error('❌ Unexpected content type:', contentType);
-                   const responseText = await response.text();
-                   console.error('Response body:', responseText);
-                   throw new Error('Unexpected response format: ' + contentType);
-               }
+            try {
+                // Prepare configuration
+                const config = {
+                    preset: currentPreset,
+                    customStyle: getCurrentConfiguration(),
+                    transcriptionData: transcriptionData
+                };
 
-           } catch (error) {
-               console.error('❌ Preview generation failed:', error);
-               showNotification('warning', 'Preview Failed', 'Using demo preview instead: ' + error.message);
-               showDemoPreview();
+                console.log('🎬 Generating preview with config:', config);
 
-           } finally {
-               // Restore button state
-               previewBtn.disabled = false;
-               previewBtn.innerHTML = `
-                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                   </svg>
-                   Generate Preview
-               `;
-           }
-       }
+                // Prepare form data for direct API call
+                const formData = new FormData();
+                formData.append('uploadId', uploadId);
+                formData.append('data', JSON.stringify(config));
 
-       function debugPreview() {
-           console.log('🔍 Debug Preview State:');
-           console.log('- Upload ID:', sessionStorage.getItem('uploadId'));
-           console.log('- Transcription Data:', transcriptionData);
-           console.log('- Current Preset:', currentPreset);
-           console.log('- Current Config:', getCurrentConfiguration());
+                // Make direct API call to preview endpoint
+                const response = await fetch('/api/direct-preview.php?position=middle', {
+                    method: 'POST',
+                    body: formData
+                });
 
-           // Test direct API call with minimal data
-           fetch('/api/direct-preview.php', {
-               method: 'POST',
-               body: new FormData()
-           })
-           .then(response => {
-               console.log('🔍 Direct API test - Status:', response.status);
-               console.log('🔍 Direct API test - Content-Type:', response.headers.get('Content-Type'));
-               return response.text();
-           })
-           .then(text => {
-               console.log('🔍 Direct API test - Response:', text.substring(0, 200));
-           })
-           .catch(error => {
-               console.error('🔍 Direct API test - Error:', error);
-           });
-       }
+                if (!response.ok) {
+                    const contentType = response.headers.get('Content-Type');
+                    let errorMessage = 'Preview generation failed';
 
-       function showDemoPreview() {
-           const loading = document.getElementById('preview-loading');
-           const image = document.getElementById('preview-image');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } else {
+                        const errorText = await response.text();
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            errorMessage = errorJson.error || errorMessage;
+                        } catch (e) {
+                            errorMessage = errorText || errorMessage;
+                        }
+                    }
 
-           // Create a demo preview using canvas
-           const canvas = document.createElement('canvas');
-           canvas.width = 360;  // 9:16 aspect ratio
-           canvas.height = 640;
-           const ctx = canvas.getContext('2d');
+                    throw new Error(errorMessage);
+                }
 
-           // Background
-           ctx.fillStyle = '#1a1a1a';
-           ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Check response content type
+                const contentType = response.headers.get('Content-Type');
 
-           // Get current settings
-           const config = getCurrentConfiguration();
+                if (contentType && contentType.startsWith('image/')) {
+                    // Success - display the preview image
+                    const imageBlob = await response.blob();
 
-           // Draw sample text
-           ctx.textAlign = 'center';
-           ctx.font = `${config.fontWeight} ${Math.round(config.fontSize * 0.8)}px ${config.fontFamily}`;
+                    // Convert blob to Data URL
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        image.src = e.target.result;
+                        loading.classList.add('hidden');
+                        image.classList.remove('hidden');
+                    };
 
-           // Text with outline
-           const text = 'Sample Caption Text';
-           const x = canvas.width / 2;
-           const y = canvas.height / 2 + (config.positionOffset * 0.5);
+                    reader.onerror = function(e) {
+                        console.error('❌ Failed to convert image to Data URL:', e);
+                        showNotification('error', 'Image Processing Failed', 'Could not process preview image');
+                        showDemoPreview();
+                    };
 
-           // Outline
-           ctx.strokeStyle = '#' + config.outlineColor;
-           ctx.lineWidth = config.outlineWidth;
-           ctx.strokeText(text, x, y);
+                    reader.readAsDataURL(imageBlob);
+                    showNotification('success', 'Preview Generated', 'Real caption preview ready');
+                } else {
+                    throw new Error('Unexpected response format: ' + contentType);
+                }
 
-           // Fill
-           ctx.fillStyle = '#' + config.textColor;
-           ctx.fillText(text, x, y);
+            } catch (error) {
+                console.error('❌ Preview generation failed:', error);
+                showNotification('warning', 'Preview Failed', 'Using demo preview instead: ' + error.message);
+                showDemoPreview();
 
-           // Active word highlight
-           ctx.font = `${config.fontWeight} ${Math.round(config.activeWordFontSize * 0.8)}px ${config.fontFamily}`;
-           ctx.strokeStyle = '#' + config.outlineColor;
-           ctx.lineWidth = config.outlineWidth;
-           ctx.strokeText('Active', x - 60, y + 60);
-           ctx.fillStyle = '#' + config.activeWordColor;
-           ctx.fillText('Active', x - 60, y + 60);
+            } finally {
+                // Restore button state
+                previewBtn.disabled = false;
+                previewBtn.innerHTML = `
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    Generate Preview
+                `;
+            }
+        }
 
-           // Convert to blob and display
-           canvas.toBlob(blob => {
-               const imageUrl = URL.createObjectURL(blob);
-               image.src = imageUrl;
-               image.onload = () => {
-                   loading.classList.add('hidden');
-                   image.classList.remove('hidden');
-               };
-           });
-       }
+        function showDemoPreview() {
+            const loading = document.getElementById('preview-loading');
+            const image = document.getElementById('preview-image');
 
-       function getCurrentConfiguration() {
-           return {
-               fontFamily: document.getElementById('fontFamily').value || 'Inter',
-               fontSize: parseInt(document.getElementById('fontSize').value) || 80,
-               fontWeight: parseInt(document.getElementById('fontWeight').value) || 700,
-               uppercase: document.getElementById('uppercase').checked,
-               textColor: document.getElementById('textColorHex').value || 'FFFFFF',
-               outlineColor: document.getElementById('outlineColorHex').value || '000000',
-               outlineWidth: parseInt(document.getElementById('outlineWidth').value) || 4,
-               activeWordColor: document.getElementById('activeWordColorHex').value || 'FFFF00',
-               activeWordOutlineColor: document.getElementById('activeWordOutlineColorHex').value || '000000',
-               activeWordOutlineWidth: parseInt(document.getElementById('outlineWidth').value) || 4,
-               activeWordFontSize: parseInt(document.getElementById('activeWordFontSize').value) || 85,
-               position: document.getElementById('position').value || 'center',
-               positionOffset: parseInt(document.getElementById('positionOffset').value) || 300,
-               backgroundColor: '000000',
-               backgroundOpacity: 0
-           };
-       }
+            // Create a demo preview using canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 360;  // 9:16 aspect ratio
+            canvas.height = 640;
+            const ctx = canvas.getContext('2d');
 
-       async function generateFinalVideo() {
-           if (!transcriptionData) {
-               showNotification('error', 'No Data', 'No transcription data available');
-               return;
-           }
+            // Background
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-           const uploadId = sessionStorage.getItem('uploadId');
-           if (!uploadId) {
-               showNotification('error', 'No Video', 'No video file found. Please upload a video first.');
-               return;
-           }
+            // Get current settings
+            const config = getCurrentConfiguration();
 
-           const generateBtn = document.getElementById('generate-btn');
-           const originalText = generateBtn.innerHTML;
+            // Draw sample text
+            ctx.textAlign = 'center';
+            const fontSize = Math.round((config.fontSize || 80) * 0.8);
+            const fontWeight = config.fontWeight || 700;
+            const fontFamily = config.fontFamily || 'Inter';
+            ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
 
-           // Show loading state
-           generateBtn.disabled = true;
-           generateBtn.innerHTML = `
-               <svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-               </svg>
-               Preparing Generation...
-           `;
+            // Text with outline
+            const text = 'Sample Caption Text';
+            const x = canvas.width / 2;
+            let y = canvas.height / 2;
 
-           try {
-               // Prepare final configuration
-               const config = {
-                   preset: currentPreset,
-                   customStyle: getCurrentConfiguration(),
-                   transcriptionData: transcriptionData
-               };
+            // Apply position offset
+            if (config.positionOffset) {
+                y += config.positionOffset * 0.5;
+            }
 
-               // Validate configuration
-               if (!config.transcriptionData || !config.transcriptionData.transcription || 
-                   !config.transcriptionData.transcription.captions || 
-                   config.transcriptionData.transcription.captions.length === 0) {
-                   throw new Error('Invalid transcription data');
-               }
+            // Outline
+            ctx.strokeStyle = '#' + (config.outlineColor || '000000');
+            ctx.lineWidth = config.outlineWidth || 4;
+            ctx.strokeText(text, x, y);
 
-               console.log('🎬 Starting video generation with config:', {
-                   preset: config.preset,
-                   captionsCount: config.transcriptionData.transcription.captions.length,
-                   service: 'ffmpeg',
-                   uploadId: uploadId
-               });
+            // Fill
+            ctx.fillStyle = '#' + (config.textColor || 'FFFFFF');
+            ctx.fillText(text, x, y);
 
-               // Save configuration for result page
-               sessionStorage.setItem('finalConfig', JSON.stringify(config));
-               sessionStorage.setItem('selectedService', 'ffmpeg');
+            // Active word highlight
+            const activeFontSize = Math.round((config.activeWordFontSize || 85) * 0.8);
+            ctx.font = `${fontWeight} ${activeFontSize}px ${fontFamily}`;
+            ctx.strokeStyle = '#' + (config.outlineColor || '000000');
+            ctx.lineWidth = config.outlineWidth || 4;
+            ctx.strokeText('Active', x - 60, y + 60);
+            ctx.fillStyle = '#' + (config.activeWordColor || 'FFFF00');
+            ctx.fillText('Active', x - 60, y + 60);
 
-               showNotification('success', 'Configuration Ready', 'Redirecting to generation page...');
+            // Convert to blob and display
+            canvas.toBlob(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                image.src = imageUrl;
+                image.onload = () => {
+                    loading.classList.add('hidden');
+                    image.classList.remove('hidden');
+                };
+            });
+        }
 
-               // Redirect to result page
-               setTimeout(() => {
-                   window.location.href = 'result.php';
-               }, 1500);
+        async function generateFinalVideo() {
+            if (!transcriptionData) {
+                showNotification('error', 'No Data', 'No transcription data available');
+                return;
+            }
 
-           } catch (error) {
-               console.error('❌ Failed to prepare generation:', error);
-               showNotification('error', 'Preparation Failed', error.message);
+            if (!currentPreset) {
+                showNotification('error', 'No Preset', 'Please select a preset first');
+                return;
+            }
 
-               // Restore button state
-               generateBtn.disabled = false;
-               generateBtn.innerHTML = originalText;
-           }
-       }
+            const uploadId = sessionStorage.getItem('uploadId');
+            if (!uploadId) {
+                showNotification('error', 'No Video', 'No video file found. Please upload a video first.');
+                return;
+            }
 
-       async function refreshPresets() {
-           document.getElementById('presets-loading').classList.remove('hidden');
-           document.getElementById('presets-list').classList.add('hidden');
-           await loadPresets();
-       }
+            const generateBtn = document.getElementById('generate-btn');
+            const originalText = generateBtn.innerHTML;
 
-       // Auto-select first preset on load
-       setTimeout(() => {
-           if (availablePresets.length > 0) {
-               selectPreset(availablePresets[0].name);
-           }
-       }, 1000);
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `
+                <svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Preparing Generation...
+            `;
 
-       // Keyboard shortcuts
-       document.addEventListener('keydown', function(event) {
-           // P for preview
-           if (event.key.toLowerCase() === 'p' && !event.ctrlKey && !event.metaKey) {
-               event.preventDefault();
-               generatePreview();
-           }
+            try {
+                // Prepare final configuration
+                const config = {
+                    preset: currentPreset,
+                    customStyle: getCurrentConfiguration(),
+                    transcriptionData: transcriptionData
+                };
 
-           // Enter for generate
-           if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-               event.preventDefault();
-               generateFinalVideo();
-           }
-       });
+                // Validate configuration
+                if (!config.transcriptionData || !config.transcriptionData.transcription ||
+                    !config.transcriptionData.transcription.captions ||
+                    config.transcriptionData.transcription.captions.length === 0) {
+                    throw new Error('Invalid transcription data');
+                }
 
-       // Color input synchronization
-       ['textColor', 'outlineColor', 'activeWordColor', 'activeWordOutlineColor'].forEach(colorId => {
-           const colorInput = document.getElementById(colorId);
-           const hexInput = document.getElementById(colorId + 'Hex');
+                console.log('🎬 Starting video generation with config:', {
+                    preset: config.preset,
+                    captionsCount: config.transcriptionData.transcription.captions.length,
+                    service: 'ffmpeg',
+                    uploadId: uploadId
+                });
 
-           if (colorInput && hexInput) {
-               colorInput.addEventListener('input', function() {
-                   hexInput.value = this.value.substring(1).toUpperCase();
-                   updatePreview();
-               });
+                // Save configuration for result page
+                sessionStorage.setItem('finalConfig', JSON.stringify(config));
+                sessionStorage.setItem('selectedService', 'ffmpeg');
 
-               hexInput.addEventListener('input', function() {
-                   const hex = this.value.replace('#', '').substring(0, 6);
-                   if (hex.length === 6) {
-                       colorInput.value = '#' + hex;
-                       updatePreview();
-                   }
-               });
-           }
-       });
-   </script>
+                showNotification('success', 'Configuration Ready', 'Redirecting to generation page...');
+
+                // Redirect to result page
+                setTimeout(() => {
+                    window.location.href = 'result.php';
+                }, 1500);
+
+            } catch (error) {
+                console.error('❌ Failed to prepare generation:', error);
+                showNotification('error', 'Preparation Failed', error.message);
+
+                // Restore button state
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalText;
+            }
+        }
+
+        async function refreshPresets() {
+            document.getElementById('presets-loading').classList.remove('hidden');
+            document.getElementById('presets-list').classList.add('hidden');
+            await loadPresets();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // P for preview
+            if (event.key.toLowerCase() === 'p' && !event.ctrlKey && !event.metaKey) {
+                if (!document.getElementById('preview-btn').disabled) {
+                    event.preventDefault();
+                    generatePreview();
+                }
+            }
+
+            // Enter for generate
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                if (!document.getElementById('generate-btn').disabled) {
+                    event.preventDefault();
+                    generateFinalVideo();
+                }
+            }
+        });
+
+    </script>
 </body>
 </html>
