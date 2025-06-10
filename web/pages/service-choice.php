@@ -64,6 +64,28 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
             border: 3px solid #2563eb; /* Couleur Tailwind blue-600 */
             box-shadow: 0 0 0 4px #bfdbfe40; /* Légère lueur bleue */
         }
+
+        .service-card.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+            position: relative;
+            filter: grayscale(0.2);
+        }
+
+        .service-card .card-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(130, 130, 130, 0.55);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem; /* Tailwind rounded-xl */
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+            pointer-events: all;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -232,7 +254,12 @@ if (!isset($_SESSION["transcription_data"]) && !isset($_GET["demo"])) {
 
             <!-- Remotion Service Card -->
             <div class="service-card bg-white rounded-xl shadow-lg p-8 relative border-2 border-transparent transition-all"
-                 onclick="selectService(this, 'remotion')">
+                 onclick="/* selectService(this, 'remotion')*/">
+
+                <!-- Overlay -->
+                <div class="card-overlay">
+                    Not available yet
+                </div>
 
                 <!-- Creative Badge -->
                 <div class="absolute top-4 right-4">
