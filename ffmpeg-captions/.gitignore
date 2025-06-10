@@ -6,5 +6,4 @@ dist/
 temp/
 uploads/
 logs/
-examples/
 package-lock.json
