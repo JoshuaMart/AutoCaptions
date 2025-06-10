@@ -33,6 +33,10 @@ Auto Captions
 - **Technology**: TypeScript, Remotion, React-based styling
 - **Documentation**: [`remotion-captions/README.md`](remotion-captions/README.md)
 
+## Demo
+
+<video src="https://github.com/user-attachments/assets/91247f4d-5a5b-462a-9589-7a46a7c94118" controls></video>
+
 ## 🚀 Quick Start
 
 ### Prerequisites
