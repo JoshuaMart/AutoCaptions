@@ -51,6 +51,15 @@ TypeScript REST API for generating video captions using FFmpeg and ASS subtitles
 | `LOG_LEVEL` | Log message level | `info` |
 | `LOG_FILE` | File where logs are stored | `./logs/captions.log` |
 
+## 📋 Examples
+
+The `examples/` directory contains a test script to help you get started:
+```
+cd examples
+bash test-api.sh
+bash test-api-preview.sh
+```
+
 ## Endpoints
 
 ### GET /api/captions/health

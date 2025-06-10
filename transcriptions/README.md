@@ -64,6 +64,14 @@ npm run build
 npm start
 ```
 
+## 📋 Examples
+
+The `examples/` directory contains a test script to help you get started:
+```
+cd examples
+bash test-api.sh
+```
+
 ## API Endpoints
 
 ### POST /api/transcribe
