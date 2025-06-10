@@ -352,3 +352,7 @@ This API works seamlessly with:
 - **Transcription Service**: Provides the required transcription format
 - **FFmpeg Captions**: Alternative subtitle approach
 - **Frontend applications**: Via REST API
+
+## 📄 License
+
+This project is licensed is under the [Remotion](https://github.com/remotion-dev) License - see the [LICENSE](./remotion-captions/LICENSE) file for details.
