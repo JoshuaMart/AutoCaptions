@@ -480,3 +480,7 @@ Logs are saved in `./logs/captions.log` and include:
 - Processing errors
 - Performance information
 - Temporary file cleanup
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

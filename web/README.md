@@ -210,3 +210,7 @@ Enable debug output by adding to your service configuration:
 define('DEBUG_MODE', true);
 ?>
 ```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
