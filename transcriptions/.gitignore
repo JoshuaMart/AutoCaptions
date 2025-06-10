@@ -9,5 +9,4 @@ whisper.cpp/
 .DS_Store
 *.tmp
 *.temp
-examples/
 package-lock.json
