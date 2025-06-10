@@ -707,33 +707,14 @@ if ($selectedService !== "ffmpeg") {
        }
 
        async function generatePreview() {
-            const uploadId = sessionStorage.getItem('uploadId');
-            if (!uploadId) {
-                showNotification('warning', 'No Video File', 'Using demo preview');
-                showDemoPreview();
-                return;
-            }
-
-            const config = {
-                    preset: currentPreset,
-                    customStyle: getCurrentConfiguration(),
-                    transcriptionData: transcriptionData,
-                    uploadId: uploadId
-                };
-
-            const result = await API.call('ffmpeg_captions', 'api/captions/preview', 'POST', {
-                    data: JSON.stringify(config),
-                    position: 'middle'
-                });
-
            if (!transcriptionData) {
                showNotification('error', 'No Data', 'No transcription data available for preview');
                return;
            }
 
-           // Récupérer le fichier vidéo sauvegardé
-           const savedVideoFile = sessionStorage.getItem('uploadedVideoFile');
-           if (!savedVideoFile) {
+           // Check if we have a saved video file
+           const uploadId = sessionStorage.getItem('uploadId');
+           if (!uploadId) {
                showNotification('warning', 'No Video File', 'Using demo preview. Upload a video for real preview.');
                showDemoPreview();
                return;
@@ -758,14 +739,6 @@ if ($selectedService !== "ffmpeg") {
            `;
 
            try {
-               // Convertir le base64 en Blob
-               const videoData = JSON.parse(savedVideoFile);
-               const response = await fetch(videoData.data);
-               const videoBlob = await response.blob();
-
-               // Créer un File object
-               const videoFile = new File([videoBlob], videoData.name, { type: videoData.type });
-
                // Prepare configuration
                const config = {
                    preset: currentPreset,
@@ -775,36 +748,91 @@ if ($selectedService !== "ffmpeg") {
 
                console.log('🎬 Generating preview with config:', config);
 
-               // Create FormData for the request
-               const formData = {
-                   data: JSON.stringify(config),
-                   position: 'middle'
-               };
+               // Prepare form data for direct API call
+               const formData = new FormData();
+               formData.append('uploadId', uploadId);
+               formData.append('data', JSON.stringify(config));
 
-               const files = {
-                   video: videoFile
-               };
+               // Make direct API call to preview endpoint
+               const response = await fetch('/api/direct-preview.php?position=middle', {
+                   method: 'POST',
+                   body: formData
+               });
 
-               // Appel API avec le fichier vidéo
-               const result = await API.call('ffmpeg_captions', 'api/captions/preview', 'POST', formData, files);
+               console.log('📡 Preview response status:', response.status);
+               console.log('📡 Preview response content type:', response.headers.get('Content-Type'));
 
-               if (result.success && result.blob) {
-                   // Display the preview image
-                   const imageUrl = URL.createObjectURL(result.blob);
-                   image.src = imageUrl;
-                   image.onload = () => {
+               if (!response.ok) {
+                   // Try to get error message from response
+                   const contentType = response.headers.get('Content-Type');
+                   let errorMessage = 'Preview generation failed';
+
+                   if (contentType && contentType.includes('application/json')) {
+                       const errorData = await response.json();
+                       errorMessage = errorData.error || errorMessage;
+                   } else {
+                       const errorText = await response.text();
+                       console.error('Preview error response:', errorText);
+
+                       // Try to parse as JSON in case of wrong content type
+                       try {
+                           const errorJson = JSON.parse(errorText);
+                           errorMessage = errorJson.error || errorMessage;
+                       } catch (e) {
+                           errorMessage = errorText || errorMessage;
+                       }
+                   }
+
+                   throw new Error(errorMessage);
+               }
+
+               // Check response content type
+               const contentType = response.headers.get('Content-Type');
+               console.log('✅ Preview response content type:', contentType);
+
+               if (contentType && contentType.startsWith('image/')) {
+                   // Success - display the preview image
+                   const imageBlob = await response.blob();
+                   
+                   console.log('🖼️ Image blob size:', imageBlob.size, 'bytes');
+                   
+                   // Convert blob to Data URL instead of using blob URL
+                   const reader = new FileReader();
+                   reader.onload = function(e) {
+                       console.log('✅ Image converted to Data URL');
+                       
+                       // Set the Data URL as source
+                       image.src = e.target.result;
+                       
+                       // Force display immediately
                        loading.classList.add('hidden');
                        image.classList.remove('hidden');
+                       
+                       console.log('✅ Preview image displayed successfully');
                    };
-
+                   
+                   reader.onerror = function(e) {
+                       console.error('❌ Failed to convert image to Data URL:', e);
+                       showNotification('error', 'Image Processing Failed', 'Could not process preview image');
+                       showDemoPreview();
+                   };
+                   
+                   // Start conversion
+                   reader.readAsDataURL(imageBlob);
+                   
                    showNotification('success', 'Preview Generated', 'Real caption preview ready');
+
                } else {
-                   throw new Error(result.error || 'Preview generation failed');
+                   // Unexpected response type
+                   console.error('❌ Unexpected content type:', contentType);
+                   const responseText = await response.text();
+                   console.error('Response body:', responseText);
+                   throw new Error('Unexpected response format: ' + contentType);
                }
 
            } catch (error) {
                console.error('❌ Preview generation failed:', error);
-               showNotification('warning', 'Preview Failed', 'Using demo preview instead');
+               showNotification('warning', 'Preview Failed', 'Using demo preview instead: ' + error.message);
                showDemoPreview();
 
            } finally {
@@ -817,6 +845,31 @@ if ($selectedService !== "ffmpeg") {
                    Generate Preview
                `;
            }
+       }
+
+       function debugPreview() {
+           console.log('🔍 Debug Preview State:');
+           console.log('- Upload ID:', sessionStorage.getItem('uploadId'));
+           console.log('- Transcription Data:', transcriptionData);
+           console.log('- Current Preset:', currentPreset);
+           console.log('- Current Config:', getCurrentConfiguration());
+
+           // Test direct API call with minimal data
+           fetch('/api/direct-preview.php', {
+               method: 'POST',
+               body: new FormData()
+           })
+           .then(response => {
+               console.log('🔍 Direct API test - Status:', response.status);
+               console.log('🔍 Direct API test - Content-Type:', response.headers.get('Content-Type'));
+               return response.text();
+           })
+           .then(text => {
+               console.log('🔍 Direct API test - Response:', text.substring(0, 200));
+           })
+           .catch(error => {
+               console.error('🔍 Direct API test - Error:', error);
+           });
        }
 
        function showDemoPreview() {

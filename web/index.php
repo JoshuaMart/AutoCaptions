@@ -134,12 +134,6 @@ require_once "config/services.php";
                 <p class="text-sm text-gray-500 mb-4" id="processing-message">
                     Extracting audio and generating transcription...
                 </p>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                         style="width: 0%"
-                         id="progress-bar"></div>
-                </div>
-                <p class="text-xs text-gray-400 mt-2" id="progress-text">0%</p>
             </div>
 
             <!-- Action Buttons -->
@@ -341,7 +335,31 @@ require_once "config/services.php";
             document.getElementById('processing-section').classList.remove('hidden');
 
             try {
-                // Prepare form data
+                // First, save the video file to disk
+                const uploadFormData = new FormData();
+                uploadFormData.append('video', selectedFile);
+
+                const uploadResponse = await fetch('/api/save-upload.php', {
+                    method: 'POST',
+                    body: uploadFormData
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Failed to save video file');
+                }
+
+                const uploadResult = await uploadResponse.json();
+                if (!uploadResult.success) {
+                    throw new Error(uploadResult.error || 'Failed to save video file');
+                }
+
+                // Store upload information
+                sessionStorage.setItem('uploadId', uploadResult.uploadId);
+                sessionStorage.setItem('videoFileName', selectedFile.name);
+
+                console.log('✅ Video file saved with ID:', uploadResult.uploadId);
+
+                // Now start transcription
                 const formData = {
                     service: 'whisper-cpp' // Default service
                 };
@@ -356,7 +374,6 @@ require_once "config/services.php";
                 if (result.success) {
                     // Store transcription data in session/localStorage
                     sessionStorage.setItem('transcriptionData', JSON.stringify(result));
-                    sessionStorage.setItem('videoFileName', selectedFile.name);
 
                     showNotification('success', 'Transcription Complete', 'Redirecting to edit page...');
 
@@ -377,32 +394,6 @@ require_once "config/services.php";
                 document.getElementById('upload-section').classList.remove('hidden');
             }
         }
-
-        // Progress simulation (you can replace this with real progress tracking)
-        function simulateProgress() {
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            let progress = 0;
-
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 95) progress = 95;
-
-                progressBar.style.width = progress + '%';
-                progressText.textContent = Math.round(progress) + '%';
-
-                if (progress >= 95) {
-                    clearInterval(interval);
-                }
-            }, 500);
-        }
-
-        // Start progress simulation when processing begins
-        document.getElementById('processing-section').addEventListener('DOMSubtreeModified', function() {
-            if (!this.classList.contains('hidden')) {
-                simulateProgress();
-            }
-        });
     </script>
 </body>
 </html>
