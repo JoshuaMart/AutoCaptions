@@ -98,7 +98,7 @@ export class CaptionService {
     const captionEnd = selectedCaption.endMs || captionStart + 0.5;
 
     // Use middle of the caption for optimal visibility
-    const timestamp = captionStart + (captionEnd - captionStart) / 2;
+    const timestamp = (captionStart + (captionEnd - captionStart) / 2) / 1000;
 
     return {
       timestamp,
