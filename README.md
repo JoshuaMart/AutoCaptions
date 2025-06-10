@@ -187,6 +187,7 @@ curl http://localhost:3003/health    # Remotion Captions
 
   - `ffmpeg-captions` service is under the MIT License - see the [LICENSE](./ffmpeg-captions/LICENSE) file for details.
   - `transcriptions` service is under the MIT License - see the [LICENSE](./ffmpeg-captions/LICENSE) file for details.
+  - `remotion-captions` service is under the [Remotion](https://github.com/remotion-dev) License - see the [LICENSE](./remotion-captions/LICENSE) file for details.
   - `web` service is under the MIT License - see the [LICENSE](./ffmpeg-captions/LICENSE) file for details.
 
 ---
