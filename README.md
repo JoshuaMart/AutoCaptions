@@ -68,7 +68,7 @@ Auto Captions
    cd remotion-captions && npm run dev
    ```
 
-### Option 2: Docker Deployment
+### Option 2: Docker Deployment (recommanded)
 
 1. **Start all services**:
    ```bash
