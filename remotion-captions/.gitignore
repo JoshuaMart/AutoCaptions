@@ -11,6 +11,3 @@ dist/
 
 # Uploads and temporary files
 remotion/public/uploads/
-
-# Tests files
-test*
