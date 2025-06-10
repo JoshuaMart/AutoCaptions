@@ -232,28 +232,58 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         `Group ${groupIdx}: ${group.length} words from ${group[0].startMs}ms to ${group[group.length - 1].endMs}ms`,
       );
 
+      // Create a timeline for this group to avoid overlaps
+      const timeline: Array<{
+        start: number;
+        end: number;
+        activeWordIndex: number;
+        line: string;
+      }> = [];
+
+      // Generate timeline entries for each word
       for (let wordIdx = 0; wordIdx < group.length; wordIdx++) {
         const currentWord = group[wordIdx];
-        const start = secToASS(currentWord.startMs / 1000); // Convert ms to seconds
-        const end = secToASS(currentWord.endMs / 1000); // Convert ms to seconds
+        let endTime: number;
+        
+        if (wordIdx < group.length - 1) {
+          // End when next word starts (no gap)
+          endTime = group[wordIdx + 1].startMs;
+        } else {
+          // Last word: use its calculated end time
+          endTime = currentWord.endMs;
+        }
 
+        // Create the line with current word highlighted
         const line = group
           .map((word, idx) =>
             createWordTag(
               word,
               style,
-              idx === wordIdx, // isActive
+              idx === wordIdx,
               adjustedFontSize,
             ),
           )
           .join(" ");
 
-        const dialogue = `Dialogue: 0,${start},${end},Default,,0,0,0,,${line}`;
+        timeline.push({
+          start: currentWord.startMs,
+          end: endTime,
+          activeWordIndex: wordIdx,
+          line: line,
+        });
+      }
+
+      // Convert timeline to ASS dialogues
+      for (const entry of timeline) {
+        const start = secToASS(entry.start / 1000);
+        const end = secToASS(entry.end / 1000);
+        
+        const dialogue = `Dialogue: 0,${start},${end},Default,,0,0,0,,${entry.line}`;
         ass += dialogue + "\n";
 
         // Log first few dialogues for debugging
-        if (groupIdx === 0 && wordIdx < 3) {
-          logger.info(`Dialogue ${wordIdx}: ${dialogue}`);
+        if (groupIdx === 0 && entry.activeWordIndex < 3) {
+          logger.info(`Dialogue ${entry.activeWordIndex}: ${dialogue}`);
         }
       }
     }
