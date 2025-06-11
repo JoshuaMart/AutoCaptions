@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\ServiceManager;
+use App\Services\ConfigManager;
 use App\Core\Application;
 
 class ConfigController

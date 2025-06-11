@@ -105,6 +105,7 @@ class Router
         if (empty($requestPath)) {
             $requestPath = '/';
         }
+        
 
         $matchedRoute = null;
         $allowedMethods = [];
@@ -133,15 +134,16 @@ class Router
             // Path matched, but method not allowed
             $response->setStatusCode(405); // Method Not Allowed
             $response->setHeader('Allow', implode(', ', array_unique($allowedMethods)));
-            $response->setContent('<h1>405 Method Not Allowed</h1><p>The requested method is not allowed for this URI.</p>');
-            $response->send();
+            $response->errorJson('METHOD_NOT_ALLOWED', 'The requested method is not allowed for this URI.', null, 405)->send();
         } else {
-            // No route matched
-            $response->setStatusCode(404); // Not Found
-            $response->setContent('<h1>404 Not Found</h1><p>The requested page could not be found.</p>');
-            // A more sophisticated application might render a specific 404 view
-            // e.g., $response->render('errors/404');
-            $response->send();
+            // No route matched - return JSON error for API routes, HTML for others
+            if (strpos($requestPath, '/api/') === 0) {
+                $response->errorJson('ROUTE_NOT_FOUND', 'The requested API endpoint could not be found.', ['path' => $requestPath, 'method' => $requestMethod], 404)->send();
+            } else {
+                $response->setStatusCode(404); // Not Found
+                $response->setContent('<h1>404 Not Found</h1><p>The requested page could not be found.</p>');
+                $response->send();
+            }
         }
     }
 

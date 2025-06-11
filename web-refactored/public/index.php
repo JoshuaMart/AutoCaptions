@@ -3,24 +3,37 @@
 declare(strict_types=1);
 
 // Define the root path of the web-refactored application
-define('WEB_REFACTORED_ROOT', dirname(__DIR__));
+define("WEB_REFACTORED_ROOT", dirname(__DIR__));
 
 // Basic error reporting for development
 // In a production environment, display_errors should be Off
 // and errors logged to a file.
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set("display_errors", "1");
+ini_set("display_startup_errors", "1");
 error_reporting(E_ALL);
+
+// Handle PHP built-in server routing
+if (PHP_SAPI === "cli-server") {
+    $requestUri = $_SERVER["REQUEST_URI"];
+    $parsedUrl = parse_url($requestUri);
+    $path = $parsedUrl["path"] ?? "/";
+
+    // If it's a real file in public directory, serve it
+    $publicFile = __DIR__ . $path;
+    if ($path !== "/" && file_exists($publicFile) && is_file($publicFile)) {
+        return false; // Let PHP serve the file
+    }
+}
 
 // Autoloading - For a real application, Composer's autoloader would be used.
 // For now, we'll manually require the Application class.
 // This assumes a PSR-4 like structure where App\Core\Application is in src/Core/Application.php
 spl_autoload_register(function ($class) {
     // Project-specific namespace prefix
-    $prefix = 'App\\';
+    $prefix = "App\\";
 
     // Base directory for the namespace prefix
-    $base_dir = WEB_REFACTORED_ROOT . '/src/';
+    $base_dir = WEB_REFACTORED_ROOT . "/src/";
 
     // Does the class use the namespace prefix?
     $len = strlen($prefix);
@@ -35,14 +48,13 @@ spl_autoload_register(function ($class) {
     // Replace the namespace prefix with the base directory, replace namespace
     // separators with directory separators in the relative class name, append
     // with .php
-    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+    $file = $base_dir . str_replace("\\", "/", $relative_class) . ".php";
 
     // If the file exists, require it
     if (file_exists($file)) {
         require $file;
     }
 });
-
 
 // Bootstrap the application
 // The Application class will handle routing, request processing, etc.
@@ -57,16 +69,28 @@ try {
     http_response_code(500);
     echo "<h1>Application Error</h1>";
     echo "<p>An unexpected error occurred. Please try again later.</p>";
-    if (ini_get('display_errors') === '1') {
+    if (ini_get("display_errors") === "1") {
         echo "<pre>";
-        echo "Error: " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . "\n";
-        echo "File: " . htmlspecialchars($e->getFile(), ENT_QUOTES, 'UTF-8') . "\n";
+        echo "Error: " .
+            htmlspecialchars($e->getMessage(), ENT_QUOTES, "UTF-8") .
+            "\n";
+        echo "File: " .
+            htmlspecialchars($e->getFile(), ENT_QUOTES, "UTF-8") .
+            "\n";
         echo "Line: " . $e->getLine() . "\n";
-        echo "Trace: \n" . htmlspecialchars($e->getTraceAsString(), ENT_QUOTES, 'UTF-8');
+        echo "Trace: \n" .
+            htmlspecialchars($e->getTraceAsString(), ENT_QUOTES, "UTF-8");
         echo "</pre>";
     }
     // Log the error
-    error_log("Uncaught exception: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+    error_log(
+        "Uncaught exception: " .
+            $e->getMessage() .
+            " in " .
+            $e->getFile() .
+            ":" .
+            $e->getLine()
+    );
 }
 
 ?>
