@@ -6,8 +6,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle ?? 'AutoCaptions - Video Caption Generator') ?></title>
-    <meta name="description" content="<?= htmlspecialchars($pageDescription ?? 'Generate automatic captions for your 9:16 videos with AI-powered transcription') ?>">
+    <title><?= htmlspecialchars(
+        $pageTitle ?? "AutoCaptions - Video Caption Generator"
+    ) ?></title>
+    <meta name="description" content="<?= htmlspecialchars(
+        $pageDescription ??
+            "Generate automatic captions for your 9:16 videos with AI-powered transcription"
+    ) ?>">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -128,7 +133,7 @@
                 <div class="flex-shrink-0" id="notification-icon">
                     <!-- Icon will be set by JavaScript -->
                 </div>
-                <div class="ml-3 w-0 flex-1">
+                <div class="ml-3 flex-1">
                     <p class="text-sm font-medium text-gray-900" id="notification-title"></p>
                     <p class="mt-1 text-sm text-gray-500" id="notification-message"></p>
                 </div>
@@ -159,7 +164,7 @@
                             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
                                 Service Configuration
                             </h3>
-                            
+
                             <div id="service-config-container">
                                 <!-- Configuration UI will be loaded here -->
                             </div>
