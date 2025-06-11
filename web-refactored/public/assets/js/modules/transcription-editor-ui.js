@@ -112,45 +112,18 @@ export class TranscriptionEditorUI {
     }
 
     groupCaptionsIntoSegments(captions) {
-        // Group captions into logical segments (sentences or pauses)
-        const segments = [];
-        let currentSegment = [];
-        
-        for (let i = 0; i < captions.length; i++) {
-            const caption = captions[i];
-            currentSegment.push(caption);
-            
-            // End segment on punctuation or long pause
-            const hasEndPunctuation = /[.!?]$/.test(caption.text?.trim() || '');
-            const nextCaption = captions[i + 1];
-            const longPause = nextCaption && (nextCaption.startMs - caption.endMs) > 1000; // 1 second pause
-            
-            if (hasEndPunctuation || longPause || currentSegment.length >= 15) {
-                segments.push({
-                    words: [...currentSegment],
-                    startMs: currentSegment[0].startMs,
-                    endMs: currentSegment[currentSegment.length - 1].endMs
-                });
-                currentSegment = [];
-            }
-        }
-        
-        // Add remaining words as final segment
-        if (currentSegment.length > 0) {
-            segments.push({
-                words: [...currentSegment],
-                startMs: currentSegment[0].startMs,
-                endMs: currentSegment[currentSegment.length - 1].endMs
-            });
-        }
-        
-        return segments;
+        // Create a segment per caption for word-by-word editing
+        return captions.map(caption => ({
+            words: [caption],
+            startMs: caption.startMs,
+            endMs: caption.endMs
+        }));
     }
 
     renderSegment(segment, index) {
         const startTime = this.formatTimestamp(segment.startMs);
         const endTime = this.formatTimestamp(segment.endMs);
-        const text = segment.words.map(word => word.text || '').join('');
+        const text = segment.words.map(word => word.text || '').join(' ').trim();
 
         return `
             <div class="bg-gray-50 rounded-lg p-4 segment" data-segment-index="${index}">
@@ -225,25 +198,19 @@ export class TranscriptionEditorUI {
 
         try {
             const milliseconds = this.parseTimestamp(value);
-            const segments = this.groupCaptionsIntoSegments(this.transcriptionData.transcription.captions);
-            
-            if (segments[segmentIndex]) {
+            const captions = this.transcriptionData.transcription.captions;
+            const caption = captions[segmentIndex];
+            if (caption) {
                 if (type === 'start') {
-                    segments[segmentIndex].startMs = milliseconds;
-                    // Update all words in this segment
-                    segments[segmentIndex].words.forEach((word, i) => {
-                        if (i === 0) word.startMs = milliseconds;
-                    });
+                    caption.startMs = milliseconds;
                 } else if (type === 'end') {
-                    segments[segmentIndex].endMs = milliseconds;
-                    // Update last word in segment
-                    const lastWord = segments[segmentIndex].words[segments[segmentIndex].words.length - 1];
-                    if (lastWord) lastWord.endMs = milliseconds;
+                    caption.endMs = milliseconds;
                 }
-                
+
                 this.hasUnsavedChanges = true;
                 this.updateSaveButtonState();
-                console.log(`✏️ Updated segment ${segmentIndex} ${type} time to ${value}`);
+                console.log(`✏️ Updated word ${segmentIndex} ${type} time to ${value}`);
+                this.renderEditor();
             }
         } catch (error) {
             console.error('✏️ Invalid timestamp format:', value);
@@ -253,6 +220,8 @@ export class TranscriptionEditorUI {
 
     updateSegmentText(segmentIndex, newText) {
         console.log(`✏️ Updating segment ${segmentIndex} text:`, newText);
+        // Update the model with trimmed text
+        this.transcriptionData.transcription.captions[segmentIndex].text = newText.trim();
         
         // For now, just mark as changed
         // In a full implementation, we would split the text back into words
