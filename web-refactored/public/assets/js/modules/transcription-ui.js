@@ -235,6 +235,38 @@ export class TranscriptionUI {
     await this.startTranscription();
   }
 
+  async regenerateTranscription() {
+    if (this.isProcessing) {
+      console.warn("📝 TranscriptionUI - Already processing transcription");
+      return;
+    }
+
+    console.log("📝 TranscriptionUI - Regenerating transcription...");
+    
+    // Clear existing transcription data
+    this.transcriptionData = null;
+    
+    // Hide transcription section
+    this.hideTranscriptionSection();
+    
+    // Clear transcription from session
+    try {
+      await this.apiClient.delete('/api/transcription/clear');
+    } catch (error) {
+      console.warn("📝 TranscriptionUI - Failed to clear transcription from server:", error);
+    }
+    
+    // Reset to generate state (this will show the generation card again)
+    this.showTranscriptionGenerateState();
+    
+    // Show notification
+    window.app?.showNotification(
+      "info",
+      "Transcription Cleared",
+      "You can now generate a new transcription"
+    );
+  }
+
   // New methods for transcriptions page
   async loadVideoInfo() {
     console.log("📝 TranscriptionUI - Loading video info from session...");
@@ -319,31 +351,31 @@ export class TranscriptionUI {
   showTranscriptionGenerateState() {
     const generateSection = document.getElementById('transcription-generate-section');
     const processingSection = document.getElementById('transcription-processing-section');
-    const completeSection = document.getElementById('transcription-complete-section');
+    const generationCard = document.getElementById('transcription-generation-card');
     
     if (generateSection) generateSection.classList.remove('hidden');
     if (processingSection) processingSection.classList.add('hidden');
-    if (completeSection) completeSection.classList.add('hidden');
+    if (generationCard) generationCard.classList.remove('hidden');
   }
 
   showTranscriptionProcessingState() {
     const generateSection = document.getElementById('transcription-generate-section');
     const processingSection = document.getElementById('transcription-processing-section');
-    const completeSection = document.getElementById('transcription-complete-section');
+    const generationCard = document.getElementById('transcription-generation-card');
     
     if (generateSection) generateSection.classList.add('hidden');
     if (processingSection) processingSection.classList.remove('hidden');
-    if (completeSection) completeSection.classList.add('hidden');
+    if (generationCard) generationCard.classList.remove('hidden');
   }
 
   showTranscriptionCompleteState() {
     const generateSection = document.getElementById('transcription-generate-section');
     const processingSection = document.getElementById('transcription-processing-section');
-    const completeSection = document.getElementById('transcription-complete-section');
+    const generationCard = document.getElementById('transcription-generation-card');
     
     if (generateSection) generateSection.classList.add('hidden');
     if (processingSection) processingSection.classList.add('hidden');
-    if (completeSection) completeSection.classList.remove('hidden');
+    if (generationCard) generationCard.classList.add('hidden'); // Hide the whole card when transcription exists
   }
 
   formatFileSize(bytes) {
