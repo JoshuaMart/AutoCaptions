@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Core\Application;
+use App\Core\Application; // Still used for type hint in __construct if we were to pass it, but not for getInstance directly
 use App\Core\Session;
 
 class ConfigManager
@@ -13,13 +13,24 @@ class ConfigManager
 
     private array $config = [];
     private array $baseServiceConfigs = []; // Specifically for 'services' config to manage overrides
-    private Session $session;
+    private ?Session $session = null; // Allow session to be initially null
 
     public function __construct()
     {
-        $app = Application::getInstance();
-        $this->session = $app->session; // Assumes session is initialized in Application
+        // Session will be injected later via setSession()
+        // $app = Application::getInstance(); // REMOVED
+        // $this->session = $app->session; // REMOVED
         $this->_loadConfigurations();
+    }
+
+    /**
+     * Sets the session instance for the ConfigManager.
+     * This should be called after Application has initialized both ConfigManager and Session.
+     * @param Session $session
+     */
+    public function setSession(Session $session): void
+    {
+        $this->session = $session;
     }
 
     private function _loadConfigurations(): void
@@ -96,7 +107,11 @@ class ConfigManager
         }
 
         // Apply session overrides
-        $overrides = $this->session->get(self::SERVICE_CONFIG_OVERRIDES_SESSION_KEY, []);
+        $overrides = [];
+        if ($this->session !== null) {
+            $overrides = $this->session->get(self::SERVICE_CONFIG_OVERRIDES_SESSION_KEY, []);
+        }
+
         if (isset($overrides[$serviceName])) {
             // Override URL if provided and valid
             if (isset($overrides[$serviceName]['url'])) {
@@ -141,7 +156,10 @@ class ConfigManager
         $effectiveConfig['name'] = $serviceName; // Add service name for convenience
         $effectiveConfig['source'] = 'file';     // Default source
 
-        $overrides = $this->session->get(self::SERVICE_CONFIG_OVERRIDES_SESSION_KEY, []);
+        $overrides = [];
+        if ($this->session !== null) {
+            $overrides = $this->session->get(self::SERVICE_CONFIG_OVERRIDES_SESSION_KEY, []);
+        }
 
         if (isset($overrides[$serviceName])) {
             if (isset($overrides[$serviceName]['url'])) {
@@ -202,6 +220,11 @@ class ConfigManager
      */
     public function updateServiceUrlOverride(string $serviceName, ?string $newUrl): bool
     {
+        if ($this->session === null) {
+            error_log("ConfigManager: Session not set. Cannot update service URL override for '{$serviceName}'.");
+            return false;
+        }
+
         // Check if the service is defined in the base configuration
         if (!isset($this->baseServiceConfigs[$serviceName])) {
             error_log("ConfigManager: Attempted to update override for non-existent service '{$serviceName}'.");
@@ -243,6 +266,9 @@ class ConfigManager
      */
     public function getAllServiceOverrides(): array
     {
+        if ($this->session === null) {
+            return [];
+        }
         return $this->session->get(self::SERVICE_CONFIG_OVERRIDES_SESSION_KEY, []);
     }
 }

@@ -48,7 +48,7 @@ spl_autoload_register(function ($class) {
 // The Application class will handle routing, request processing, etc.
 // We will create this class in a subsequent step.
 try {
-    $app = new App\Core\Application();
+    $app = App\Core\Application::getInstance();
     $app->run();
 } catch (Throwable $e) {
     // Basic error handling for critical bootstrap failures

@@ -19,12 +19,12 @@ class Request
     private string $queryString;
 
     public function __construct(
-        array $get = null,
-        array $post = null,
-        array $server = null,
-        array $files = null,
-        array $cookies = null,
-        string $rawBody = null
+        ?array $get = null,
+        ?array $post = null,
+        ?array $server = null,
+        ?array $files = null,
+        ?array $cookies = null,
+        ?string $rawBody = null
     ) {
         $this->getParams = $get ?? $_GET;
         $this->postParams = $post ?? $_POST;
@@ -100,7 +100,7 @@ class Request
         return $this->method === strtoupper($method);
     }
 
-    public function get(string $key = null, $default = null)
+    public function get(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->getParams;
@@ -108,7 +108,7 @@ class Request
         return $this->getParams[$key] ?? $default;
     }
 
-    public function post(string $key = null, $default = null)
+    public function post(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->postParams;
@@ -116,7 +116,7 @@ class Request
         return $this->postParams[$key] ?? $default;
     }
 
-    public function file(string $key = null): ?array
+    public function file(?string $key = null): ?array
     {
         if ($key === null) {
             return $this->files;
@@ -129,7 +129,7 @@ class Request
         return isset($this->files[$key]) && $this->files[$key]['error'] !== UPLOAD_ERR_NO_FILE;
     }
 
-    public function cookie(string $key = null, $default = null)
+    public function cookie(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->cookies;
@@ -137,7 +137,7 @@ class Request
         return $this->cookies[$key] ?? $default;
     }
 
-    public function header(string $key = null, $default = null)
+    public function header(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->headers;
@@ -152,7 +152,7 @@ class Request
         return $default;
     }
 
-    public function server(string $key = null, $default = null)
+    public function server(?string $key = null, $default = null)
     {
         if ($key === null) {
             return $this->serverParams;

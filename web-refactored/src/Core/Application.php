@@ -14,6 +14,7 @@ use App\Services\ConfigManager; // Import the ConfigManager
 class Application
 {
     private static ?Application $instance = null;
+    private static int $getInstanceCallDepth = 0; // Debug counter for recursion
     public ConfigManager $configManager;
 
     public Request $request;
@@ -40,14 +41,34 @@ class Application
             $this->configManager->get('security', [])
         );
 
+        // Inject Session into ConfigManager now that both are created
+        $this->configManager->setSession($this->session);
+
         date_default_timezone_set($this->configManager->get('app.timezone', 'UTC'));
     }
 
     public static function getInstance(): Application
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
+        self::$getInstanceCallDepth++;
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5); // Get a small backtrace
+        $caller = isset($trace[1]) ? ($trace[1]['class'] ?? 'Global') . '::' . ($trace[1]['function'] ?? 'unknown') : 'Unknown';
+        
+        error_log("Application::getInstance() called. Depth: " . self::$getInstanceCallDepth . ". Caller: " . $caller);
+
+        if (self::$getInstanceCallDepth > 5) { // Arbitrary limit to stop runaway recursion
+            error_log("Application::getInstance() - Recursion depth limit exceeded. Aborting.");
+            // Optionally, dump more trace info here
+            // debug_print_backtrace();
+            throw new \RuntimeException("Application::getInstance() recursion detected from caller: " . $caller);
         }
+
+        if (self::$instance === null) {
+            error_log("Application::getInstance() - Instance is null, creating new Application. Depth: " . self::$getInstanceCallDepth);
+            self::$instance = new self();
+            error_log("Application::getInstance() - New Application created. Depth: " . self::$getInstanceCallDepth);
+        }
+        
+        self::$getInstanceCallDepth--;
         return self::$instance;
     }
 
