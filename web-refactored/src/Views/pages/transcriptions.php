@@ -55,7 +55,7 @@ $pageDescription =
 </div>
 
 <!-- Transcription Generation Card -->
-<div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+<div id="transcription-generation-card" class="bg-white rounded-lg shadow-lg p-8 mb-8">
     <!-- Initial State: Generate Transcription -->
     <div id="transcription-generate-section">
         <div class="text-center mb-6">
@@ -112,43 +112,6 @@ $pageDescription =
                 </svg>
                 Add Segment
             </button>
-        </div>
-    </div>
-
-    <!-- Transcription Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-gray-900">Segments</p>
-                    <p class="text-lg font-semibold text-gray-700" id="segment-count">0</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-gray-900">Words</p>
-                    <p class="text-lg font-semibold text-gray-700" id="word-count">0</p>
-                </div>
-            </div>
-        </div>
-        <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-gray-900">Duration</p>
-                    <p class="text-lg font-semibold text-gray-700" id="transcription-duration">0:00</p>
-                </div>
-            </div>
         </div>
     </div>
 
