@@ -108,11 +108,18 @@ class ServiceManager
         $response = $this->executeRequest('GET', $url, [], [], [], $timeout);
 
         if ($response['success'] && $response['statusCode'] >= 200 && $response['statusCode'] < 300) {
-            // Attempt to decode JSON, but service might return non-JSON success for health
-            $body = json_decode($response['body'], true);
-            if (json_last_error() === JSON_ERROR_NONE && isset($body['success']) && $body['success'] === true) {
+            // Response body might already be decoded as an array by executeRequest
+            $body = $response['body'];
+            if (is_string($body)) {
+                $body = json_decode($body, true);
+                $jsonDecodeSucceeded = (json_last_error() === JSON_ERROR_NONE);
+            } else {
+                $jsonDecodeSucceeded = is_array($body);
+            }
+            
+            if ($jsonDecodeSucceeded && isset($body['success']) && $body['success'] === true) {
                  return ['status' => 'healthy', 'statusCode' => $response['statusCode'], 'message' => "Service '{$serviceName}' is healthy.", 'details' => $body];
-            } elseif (json_last_error() !== JSON_ERROR_NONE && !empty($response['body'])) {
+            } elseif (!$jsonDecodeSucceeded && !empty($response['body'])) {
                 // Non-JSON success
                  return ['status' => 'healthy', 'statusCode' => $response['statusCode'], 'message' => "Service '{$serviceName}' responded successfully (non-JSON).", 'details' => $response['body']];
             }

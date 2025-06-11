@@ -34,12 +34,38 @@ class ConfigController
         $statuses = [];
 
         foreach (array_keys($serviceConfigsForDisplay) as $serviceName) {
-            // ServiceManager->healthCheck now uses ConfigManager internally for effective config
-            $statuses[$serviceName] = $this->serviceManager->healthCheck($serviceName);
+            $healthCheck = $this->serviceManager->healthCheck($serviceName);
+            $config = $serviceConfigsForDisplay[$serviceName];
+            
+            $statuses[$serviceName] = [
+                'name' => ucfirst(str_replace('-', ' ', $serviceName)),
+                'status' => $healthCheck['status'],
+                'message' => $healthCheck['message'],
+                'url' => $config['url'],
+                'statusCode' => $healthCheck['statusCode'],
+                'details' => $healthCheck['details'] ?? null,
+                'response_time' => $healthCheck['response_time'] ?? null
+            ];
+        }
+
+        // Calculate overall status
+        $healthyCount = count(array_filter($statuses, fn($s) => $s['status'] === 'healthy'));
+        $totalCount = count($statuses);
+        
+        $overallStatus = 'healthy';
+        if ($healthyCount === 0) {
+            $overallStatus = 'critical';
+        } elseif ($healthyCount < $totalCount) {
+            $overallStatus = 'degraded';
         }
 
         $response->json(
-            ['services_status' => $statuses],
+            [
+                'services' => $statuses,
+                'overall_status' => $overallStatus,
+                'healthy_services' => $healthyCount,
+                'total_services' => $totalCount
+            ],
             'Service health statuses retrieved.',
             200
         )->send();
@@ -54,28 +80,65 @@ class ConfigController
     public function getServicesConfiguration(Request $request, Response $response): void
     {
         $effectiveConfigs = $this->configManager->getAllDisplayServiceConfigs();
+        $servicesData = [];
+
+        foreach ($effectiveConfigs as $serviceName => $config) {
+            $servicesData[$serviceName] = [
+                'name' => ucfirst(str_replace('-', ' ', $serviceName)),
+                'description' => $this->getServiceDescription($serviceName),
+                'url' => $config['url'],
+                'effective_url' => $config['url'],
+                'source' => $config['source'],
+                'api_prefix' => $config['api_prefix'] ?? '',
+                'health_endpoint' => $config['health_endpoint'] ?? '',
+                'timeout' => $config['timeout'] ?? 10,
+                'default_port' => $this->getDefaultPort($serviceName)
+            ];
+        }
 
         $response->json(
-            ['services_configuration' => $effectiveConfigs],
+            $servicesData,
             'Service configurations retrieved.',
             200
         )->send();
+    }
+
+    private function getServiceDescription(string $serviceName): string
+    {
+        $descriptions = [
+            'transcriptions' => 'Audio/video transcription service using AI models',
+            'ffmpeg-captions' => 'Fast caption generation using FFmpeg and ASS subtitles',
+            'remotion-captions' => 'Advanced caption rendering with Remotion effects'
+        ];
+        
+        return $descriptions[$serviceName] ?? 'Microservice for AutoCaptions';
+    }
+
+    private function getDefaultPort(string $serviceName): string
+    {
+        $ports = [
+            'transcriptions' => '3001',
+            'ffmpeg-captions' => '3002',
+            'remotion-captions' => '3003'
+        ];
+        
+        return $ports[$serviceName] ?? '3000';
     }
 
     /**
      * Updates the configuration (e.g., URL) for specified services.
      * Updates are stored in the session and override the file configuration.
      *
-     * @param Request $request Expects a JSON body like: {"services": {"transcriptions": {"url": "http://new-url"}}}
+     * @param Request $request Expects a JSON body like: {"transcriptions": {"url": "http://new-url"}, ...}
      * @param Response $response
      */
     public function updateServiceConfiguration(Request $request, Response $response): void
     {
         $input = $request->getJsonBody();
-        if (!isset($input['services']) || !is_array($input['services'])) {
+        if (!is_array($input)) {
             $response->errorJson(
                 'INVALID_INPUT_FORMAT',
-                'Invalid input format. Expected a "services" object.',
+                'Invalid input format. Expected an object with service configurations.',
                 null,
                 400
             )->send();
@@ -86,7 +149,7 @@ class ConfigController
         $errors = [];
         $recognizedServices = array_keys($this->configManager->getAllDisplayServiceConfigs());
 
-        foreach ($input['services'] as $serviceName => $newConfig) {
+        foreach ($input as $serviceName => $newConfig) {
             if (!in_array($serviceName, $recognizedServices)) {
                 $errors[$serviceName] = "Service '{$serviceName}' is not a recognized configurable service.";
                 continue;
