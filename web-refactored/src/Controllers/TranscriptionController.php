@@ -231,4 +231,99 @@ class TranscriptionController
             )
             ->send();
     }
+
+    /**
+     * Saves modified transcription data to the session.
+     *
+     * @param Request $request The HTTP request object containing the updated transcription data.
+     * @param Response $response The HTTP response object.
+     */
+    public function saveTranscription(
+        Request $request,
+        Response $response
+    ): void {
+        $session = Application::getInstance()->session;
+        
+        // Get the current transcription data from session
+        $currentTranscriptionData = $session->get("transcription_data");
+        
+        if (!$currentTranscriptionData) {
+            $response
+                ->errorJson(
+                    "TRANSCRIPTION_NOT_FOUND",
+                    "No existing transcription data found to update.",
+                    null,
+                    404
+                )
+                ->send();
+            return;
+        }
+        
+        // Get the updated transcription data from the request
+        $updatedCaptions = $request->input("captions");
+        
+        if (!$updatedCaptions || !is_array($updatedCaptions)) {
+            $response
+                ->errorJson(
+                    "VALIDATION_ERROR",
+                    "Invalid captions data provided. Expected an array of caption objects.",
+                    null,
+                    400
+                )
+                ->send();
+            return;
+        }
+        
+        // Validate caption structure
+        foreach ($updatedCaptions as $index => $caption) {
+            if (!isset($caption['text']) || !isset($caption['startMs']) || !isset($caption['endMs'])) {
+                $response
+                    ->errorJson(
+                        "VALIDATION_ERROR",
+                        "Invalid caption structure at index {$index}. Each caption must have 'text', 'startMs', and 'endMs' properties.",
+                        ["invalid_caption_index" => $index],
+                        400
+                    )
+                    ->send();
+                return;
+            }
+            
+            // Validate timestamp values
+            if (!is_numeric($caption['startMs']) || !is_numeric($caption['endMs']) || $caption['startMs'] < 0 || $caption['endMs'] <= $caption['startMs']) {
+                $response
+                    ->errorJson(
+                        "VALIDATION_ERROR",
+                        "Invalid timestamps at caption index {$index}. Start time must be non-negative and less than end time.",
+                        ["invalid_caption_index" => $index],
+                        400
+                    )
+                    ->send();
+                return;
+            }
+        }
+        
+        // Update the transcription data with the new captions
+        $currentTranscriptionData['captions'] = $updatedCaptions;
+        $currentTranscriptionData['last_modified'] = time();
+        
+        // Recalculate duration based on the last caption
+        if (!empty($updatedCaptions)) {
+            $lastCaption = end($updatedCaptions);
+            $currentTranscriptionData['duration'] = $lastCaption['endMs'] / 1000; // Convert to seconds
+        }
+        
+        // Save the updated transcription data back to the session
+        $session->set("transcription_data", $currentTranscriptionData);
+        
+        $response
+            ->json(
+                [
+                    "transcription" => $currentTranscriptionData,
+                    "message" => "Transcription saved successfully."
+                ],
+                "Transcription data updated successfully.",
+                200
+            )
+            ->send();
+    }
 }

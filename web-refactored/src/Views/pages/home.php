@@ -14,6 +14,45 @@ $pageDescription = 'Generate automatic captions for your 9:16 videos with AI-pow
     </p>
 </div>
 
+<!-- Progress Steps -->
+<div class="mb-8">
+    <div class="flex items-center justify-center space-x-8">
+        <!-- Step 1: Upload (Current) -->
+        <div class="flex items-center">
+            <div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full text-sm font-medium">1</div>
+            <span class="ml-2 text-sm font-medium text-blue-600">Upload</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        <!-- Step 2: Transcription -->
+        <div class="flex items-center">
+            <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full text-sm font-medium">2</div>
+            <span class="ml-2 text-sm font-medium text-gray-500">Transcription</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        <!-- Step 3: Service Choice -->
+        <div class="flex items-center">
+            <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full text-sm font-medium">3</div>
+            <span class="ml-2 text-sm font-medium text-gray-500">Service Choice</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        <!-- Step 4: Configuration -->
+        <div class="flex items-center">
+            <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full text-sm font-medium">4</div>
+            <span class="ml-2 text-sm font-medium text-gray-500">Configuration</span>
+        </div>
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        <!-- Step 5: Generate -->
+        <div class="flex items-center">
+            <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full text-sm font-medium">5</div>
+            <span class="ml-2 text-sm font-medium text-gray-500">Generate</span>
+        </div>
+    </div>
+</div>
+
 <!-- Upload Card -->
 <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
     <!-- File Upload Area -->
@@ -93,22 +132,25 @@ $pageDescription = 'Generate automatic captions for your 9:16 videos with AI-pow
                 </svg>
             </div>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Processing Your Video</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Uploading Your Video</h3>
         <p class="text-sm text-gray-500 mb-4" id="processing-message">
-            Extracting audio and generating transcription...
+            Preparing your video for transcription...
         </p>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%" id="upload-progress"></div>
+        </div>
     </div>
 
     <!-- Action Buttons -->
     <div id="action-buttons" class="hidden mt-6 flex justify-center space-x-4">
         <button type="button"
-                onclick="app.transcriptionUI.startTranscription()"
-                id="transcribe-btn"
+                onclick="proceedToTranscription()"
+                id="continue-btn"
                 class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-            Generate Transcription
+            Continue to Transcription
         </button>
 
         <button type="button"
@@ -118,97 +160,6 @@ $pageDescription = 'Generate automatic captions for your 9:16 videos with AI-pow
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             Upload Different Video
-        </button>
-    </div>
-</div>
-
-<!-- Transcription Section (Initially hidden) -->
-<div id="transcription-section" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Edit Transcription</h2>
-    
-    <!-- Transcription Editor Container -->
-    <div id="transcription-editor-container">
-        <!-- Will be populated by transcription-editor-ui.js -->
-    </div>
-    
-    <!-- Transcription Actions -->
-    <div class="mt-6 flex justify-between">
-        <button type="button"
-                onclick="app.transcriptionEditorUI.saveTranscription()"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-            </svg>
-            Save Changes
-        </button>
-        
-        <button type="button"
-                onclick="app.captionRenderingUI.show()"
-                class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            Generate Video
-        </button>
-    </div>
-</div>
-
-<!-- Caption Rendering Section (Initially hidden) -->
-<div id="caption-rendering-section" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate Video with Captions</h2>
-    
-    <!-- Service Selection -->
-    <div class="mb-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Choose Rendering Service</h3>
-        <div class="grid md:grid-cols-2 gap-6">
-            <!-- FFmpeg Option -->
-            <div class="border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors" 
-                 onclick="app.captionRenderingUI.selectService('ffmpeg')">
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-lg font-semibold text-gray-900">FFmpeg</h4>
-                    <input type="radio" name="rendering-service" value="ffmpeg" class="text-blue-600">
-                </div>
-                <p class="text-sm text-gray-600 mb-2">Fast rendering with ASS styling</p>
-                <ul class="text-xs text-gray-500 list-disc list-inside">
-                    <li>Quick processing</li>
-                    <li>Classic subtitle styles</li>
-                    <li>Efficient for batch processing</li>
-                </ul>
-            </div>
-            
-            <!-- Remotion Option -->
-            <div class="border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors" 
-                 onclick="app.captionRenderingUI.selectService('remotion')">
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-lg font-semibold text-gray-900">Remotion</h4>
-                    <input type="radio" name="rendering-service" value="remotion" class="text-blue-600">
-                </div>
-                <p class="text-sm text-gray-600 mb-2">Advanced effects and customization</p>
-                <ul class="text-xs text-gray-500 list-disc list-inside">
-                    <li>Rich animations</li>
-                    <li>Custom styling</li>
-                    <li>Premium quality</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Styling Options Container -->
-    <div id="caption-styling-container" class="hidden">
-        <!-- Will be populated based on selected service -->
-    </div>
-    
-    <!-- Render Actions -->
-    <div class="mt-6 flex justify-center space-x-4">
-        <button type="button"
-                onclick="app.captionRenderingUI.generateVideo()"
-                id="generate-video-btn"
-                disabled
-                class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2-10a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Generate Video
         </button>
     </div>
 </div>
@@ -252,34 +203,68 @@ $pageDescription = 'Generate automatic captions for your 9:16 videos with AI-pow
     </div>
 </div>
 
-<!-- Templates for JavaScript -->
-<template id="transcription-segment-template">
-    <div class="bg-gray-50 rounded-lg p-4 mb-4" data-segment-index="">
-        <div class="flex justify-between items-start mb-3">
-            <div class="flex space-x-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Start</label>
-                    <input type="text" class="segment-start-time w-20 text-xs px-2 py-1 border border-gray-300 rounded" value="00:00.000">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">End</label>
-                    <input type="text" class="segment-end-time w-20 text-xs px-2 py-1 border border-gray-300 rounded" value="00:00.000">
-                </div>
-            </div>
-            <div class="flex space-x-2">
-                <button class="button-split-segment text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Split</button>
-                <button class="button-merge-segment-prev text-xs px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">Merge</button>
-                <button class="button-delete-segment text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">Delete</button>
-            </div>
+<!-- How It Works Section -->
+<div class="bg-white rounded-lg shadow-lg p-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">How It Works</h2>
+    <div class="grid md:grid-cols-5 gap-4">
+        <!-- Step 1 -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">1</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Upload</h3>
+            <p class="text-sm text-gray-600">Upload your 9:16 video file</p>
         </div>
-        <div class="segment-text-editor border border-gray-300 rounded p-3 min-h-16 focus-within:ring-2 focus-within:ring-blue-500" contenteditable="true">
-            <!-- Words will be populated here -->
+        
+        <!-- Arrow -->
+        <div class="hidden md:flex items-center justify-center">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">2</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Transcribe</h3>
+            <p class="text-sm text-gray-600">AI generates accurate captions</p>
+        </div>
+        
+        <!-- Arrow -->
+        <div class="hidden md:flex items-center justify-center">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">3</div>
+            <h3 class="font-semibold text-gray-900 mb-2">Customize</h3>
+            <p class="text-sm text-gray-600">Style and generate your video</p>
         </div>
     </div>
-</template>
+</div>
 
-<template id="transcription-word-template">
-    <span class="word inline-block px-1 py-0.5 mr-1 mb-1 rounded hover:bg-blue-100 cursor-text" contenteditable="false" data-start-ms="" data-end-ms="">
-        <!-- text content -->
-    </span>
-</template>
+<script>
+// Page-specific function to proceed to transcription
+function proceedToTranscription() {
+    // Redirect to transcription page
+    window.location.href = '/transcriptions';
+}
+
+// Override the file upload success callback to show continue button
+document.addEventListener('DOMContentLoaded', function() {
+    // Hook into the file upload module to customize behavior for home page
+    if (app && app.fileUpload) {
+        const originalOnUploadSuccess = app.fileUpload.onUploadSuccess;
+        app.fileUpload.onUploadSuccess = function(response) {
+            // Call original success handler
+            if (originalOnUploadSuccess) {
+                originalOnUploadSuccess.call(this, response);
+            }
+            
+            // Show action buttons specifically for home page
+            document.getElementById('action-buttons').classList.remove('hidden');
+        };
+    }
+});
+</script>

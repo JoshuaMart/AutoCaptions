@@ -122,11 +122,27 @@ class Application
         // Define routes (this should ideally be in a separate routes file and loaded by the Router or Application)
         // For now, a simple example:
         $appInstance = $this; // Capture $this for use in closure
+        
+        // Home page - Upload
         $this->router->get('/', function(Request $request, Response $response) use ($appInstance) {
             // $response object is created by Application and passed by Router, but renderView will use app's $this->response
             $appInstance->renderView('pages/home', [
                 'pageTitle' => 'Home - AutoCaptions Refactored'
                 // 'pageDescription' will be picked up from home.php or default in main.php
+            ]);
+        });
+        
+        // Transcriptions page
+        $this->router->get('/transcriptions', function(Request $request, Response $response) use ($appInstance) {
+            $appInstance->renderView('pages/transcriptions', [
+                'pageTitle' => 'Transcription - AutoCaptions'
+            ]);
+        });
+        
+        // Service choice page
+        $this->router->get('/service-choice', function(Request $request, Response $response) use ($appInstance) {
+            $appInstance->renderView('pages/service-choice', [
+                'pageTitle' => 'Choose Service - AutoCaptions'
             ]);
         });
 
@@ -146,6 +162,9 @@ class Application
         $this->router->get('/api/config/services/status', [ConfigController::class, 'getServicesStatus']);
         $this->router->get('/api/config/services', [ConfigController::class, 'getServicesConfiguration']);
         $this->router->post('/api/config/services', [ConfigController::class, 'updateServiceConfiguration']);
+        
+        // Additional API route for saving transcription
+        $this->router->post('/api/transcription/save', [TranscriptionController::class, 'saveTranscription']);
 
         // To add other controllers, you would define their routes here.
 
