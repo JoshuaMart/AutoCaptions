@@ -1,0 +1,72 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Prevent directory listing
+  Options -Indexes
+
+  # Redirect Trailing Slashes If Not A Folder...
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} (.+)/$
+  RewriteRule ^ %1 [L,R=301]
+
+  # Handle Front Controller...
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.*)$ public/index.php?url=$1 [L,QSA]
+
+  # If the request is for the root and index.php exists in public, serve it
+  RewriteCond %{REQUEST_URI} ^/$
+  RewriteCond %{DOCUMENT_ROOT}/public/index.php -f
+  RewriteRule ^$ public/index.php [L]
+</IfModule>
+
+# Block access to sensitive directories
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|\.(env|git|idea|vscode|bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist)|LICENSE|README\.md|REFACTORING\.md)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</FilesMatch>
+
+# Specifically allow access to the public directory content
+<Directory "public">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</Directory>
+
+# For specific directories like src, config, storage, ensure they are not web accessible
+<Directory "src">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</Directory>
+<Directory "config">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</Directory>
+<Directory "storage">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</Directory>
+
+# PHP settings (optional, can be set in php.ini)
+<IfModule mod_php.c>
+  php_flag display_errors Off
+  php_flag log_errors On
+  # Consider setting error_log path here or in PHP
+  # php_value error_log /path/to/your/project/storage/logs/php_errors.log
+</IfModule>
+
+# Security Headers (can also be set in PHP Response class)
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  # Content-Security-Policy is complex and best set in PHP based on context
+  # Header set Content-Security-Policy "default-src 'self';"
+</IfModule>
