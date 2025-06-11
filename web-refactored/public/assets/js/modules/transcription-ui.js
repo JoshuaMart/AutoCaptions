@@ -112,6 +112,9 @@ export class TranscriptionUI {
       if (response.success) {
         this.transcriptionData = response.data;
         console.log("✅ TranscriptionUI - Transcription completed");
+        
+        // Update video info card with transcription data
+        this.updateTranscriptionInfo(this.transcriptionData.transcription || this.transcriptionData);
 
         // Dispatch event for other modules
         document.dispatchEvent(
@@ -272,32 +275,52 @@ export class TranscriptionUI {
     console.log("📝 TranscriptionUI - Loading video info from session...");
     
     try {
-      // This would typically be retrieved from the session via an API call
-      // For now, we'll check if there's upload data in session via the file upload module
+      // First priority: check sessionStorage (set by file-upload.js)
+      const sessionFile = sessionStorage.getItem('uploaded_file_info');
+      if (sessionFile) {
+        const fileInfo = JSON.parse(sessionFile);
+        this.updateVideoInfoDisplay({
+          originalName: fileInfo.originalName || fileInfo.name,
+          duration: fileInfo.duration
+        });
+        return;
+      }
+      
+      // Second priority: try to get upload info from the backend session
+      const uploadResponse = await this.apiClient.get('/api/upload/current');
+      if (uploadResponse.success && uploadResponse.data) {
+        const uploadInfo = uploadResponse.data;
+        this.updateVideoInfoDisplay({
+          originalName: uploadInfo.originalName,
+          fileName: uploadInfo.fileName,
+          duration: uploadInfo.duration
+        });
+        return;
+      }
+    } catch (error) {
+      console.warn("📝 TranscriptionUI - Failed to get upload info from backend:", error);
+    }
+    
+    try {
+      // Third priority: check if there's upload data in the file upload module
       const fileUpload = window.app?.fileUpload;
       if (fileUpload && fileUpload.getCurrentFile) {
         const currentFile = fileUpload.getCurrentFile();
         if (currentFile) {
           this.updateVideoInfoDisplay({
-            name: currentFile.name,
-            size: this.formatFileSize(currentFile.size),
+            originalName: currentFile.name,
             duration: currentFile.duration || 'Unknown'
           });
           return;
         }
       }
       
-      // If no current file, try to get from session storage (temporary fallback)
-      const sessionFile = sessionStorage.getItem('uploaded_file_info');
-      if (sessionFile) {
-        const fileInfo = JSON.parse(sessionFile);
-        this.updateVideoInfoDisplay(fileInfo);
-        return;
+      // If no video info found, show a more informative message
+      console.warn("📝 TranscriptionUI - No video found, but staying on transcription page");
+      const fileNameElement = document.getElementById('video-filename');
+      if (fileNameElement) {
+        fileNameElement.textContent = 'No video information available';
       }
-      
-      // If no video info found, redirect to upload page
-      console.warn("📝 TranscriptionUI - No video found, redirecting to upload page");
-      window.location.href = '/';
       
     } catch (error) {
       console.error("📝 TranscriptionUI - Error loading video info:", error);
@@ -319,6 +342,9 @@ export class TranscriptionUI {
         console.log("📝 TranscriptionUI - Found existing transcription");
         this.transcriptionData = response.data.transcription;
         
+        // Update video info card with transcription data
+        this.updateTranscriptionInfo(this.transcriptionData);
+        
         // Show transcription complete state
         this.showTranscriptionCompleteState();
         this.showTranscriptionSection();
@@ -339,13 +365,57 @@ export class TranscriptionUI {
   }
 
   updateVideoInfoDisplay(videoInfo) {
-    const fileNameElement = document.getElementById('current-file-name');
-    const fileSizeElement = document.getElementById('current-file-size');
-    const fileDurationElement = document.getElementById('current-file-duration');
+    const fileNameElement = document.getElementById('video-filename');
+    const fileDurationElement = document.getElementById('video-duration');
     
-    if (fileNameElement) fileNameElement.textContent = videoInfo.name;
-    if (fileSizeElement) fileSizeElement.textContent = videoInfo.size;
-    if (fileDurationElement) fileDurationElement.textContent = videoInfo.duration;
+    if (fileNameElement) {
+      fileNameElement.textContent = videoInfo.originalName || videoInfo.fileName || videoInfo.name || 'Unknown video';
+    }
+    
+    if (fileDurationElement && videoInfo.duration) {
+      // Convert duration to MM:SS format if it's in seconds
+      let durationText = videoInfo.duration;
+      if (typeof videoInfo.duration === 'number') {
+        const minutes = Math.floor(videoInfo.duration / 60);
+        const seconds = Math.floor(videoInfo.duration % 60);
+        durationText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+      fileDurationElement.textContent = `Duration: ${durationText}`;
+    }
+  }
+
+  updateTranscriptionInfo(transcriptionData) {
+    const captionCountElement = document.getElementById('caption-count');
+    const languageElement = document.getElementById('transcription-language');
+    const processingTimeElement = document.getElementById('processing-time');
+    const fileDurationElement = document.getElementById('video-duration');
+    
+    if (captionCountElement && transcriptionData.captions) {
+      captionCountElement.textContent = `Captions: ${transcriptionData.captions.length}`;
+    }
+    
+    if (languageElement && transcriptionData.language) {
+      languageElement.textContent = `Language: ${transcriptionData.language.toUpperCase()}`;
+    }
+    
+    // Update duration if not already set and available in transcription data
+    if (fileDurationElement && transcriptionData.duration) {
+      const currentDuration = fileDurationElement.textContent;
+      if (currentDuration === 'Duration: --:--' || !currentDuration.includes(':')) {
+        const minutes = Math.floor(transcriptionData.duration / 60);
+        const seconds = Math.floor(transcriptionData.duration % 60);
+        const durationText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        fileDurationElement.textContent = `Duration: ${durationText}`;
+      }
+    }
+    
+    // Look for processing time in multiple locations
+    let processingTime = transcriptionData.processingTime || 
+                        (transcriptionData.metadata && transcriptionData.metadata.processingTime);
+    
+    if (processingTimeElement && processingTime) {
+      processingTimeElement.textContent = `Processing: ${processingTime}ms`;
+    }
   }
 
   showTranscriptionGenerateState() {

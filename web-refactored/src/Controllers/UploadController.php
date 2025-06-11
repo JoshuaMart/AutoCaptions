@@ -58,14 +58,31 @@ class UploadController
         $uploadResult = $this->fileManager->upload($fileData);
 
         if ($uploadResult['success']) {
+            // Get additional metadata from request
+            $duration = $request->input('duration');
+            $fileSize = $request->input('fileSize');
+            $originalName = $request->input('originalName');
+            
             // Store essential file info in session for subsequent steps (e.g., transcription)
             $session = Application::getInstance()->session;
-            $session->set('uploaded_file_info', [
+            $fileInfo = [
                 'filePath' => $uploadResult['filePath'], // Absolute path on server
                 'fileName' => $uploadResult['fileName'], // Sanitized, unique name
-                'originalName' => $uploadResult['originalName'],
+                'originalName' => $uploadResult['originalName'] ?: $originalName,
                 'uploadTimestamp' => time(),
-            ]);
+            ];
+            
+            // Add duration if provided
+            if ($duration !== null && is_numeric($duration)) {
+                $fileInfo['duration'] = (float)$duration;
+            }
+            
+            // Add file size if provided
+            if ($fileSize !== null && is_numeric($fileSize)) {
+                $fileInfo['fileSize'] = (int)$fileSize;
+            }
+            
+            $session->set('uploaded_file_info', $fileInfo);
 
             // Respond to the client
             $response->json(
@@ -163,6 +180,39 @@ class UploadController
                 // ['path_attempted' => $filePathToDelete], 
                 500 // Internal Server Error
             )->send();
+        }
+    }
+
+    /**
+     * Récupère les informations du fichier actuellement téléversé depuis la session.
+     *
+     * @param Request $request
+     * @param Response $response
+     */
+    public function getCurrentUpload(
+        Request $request,
+        Response $response
+    ): void {
+        $session = Application::getInstance()->session;
+        $uploadedFileInfo = $session->get("uploaded_file_info");
+
+        if ($uploadedFileInfo) {
+            $response
+                ->json(
+                    $uploadedFileInfo,
+                    "Current upload information retrieved successfully.",
+                    200
+                )
+                ->send();
+        } else {
+            $response
+                ->errorJson(
+                    "UPLOAD_NOT_FOUND",
+                    "No upload information found in the current session.",
+                    null,
+                    404
+                )
+                ->send();
         }
     }
 }

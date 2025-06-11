@@ -152,6 +152,7 @@ class Application
         // If a more generic delete by ID is needed later, a new method and route can be added.
         $this->router->post('/api/upload', [UploadController::class, 'handleUpload']);
         $this->router->delete('/api/upload', [UploadController::class, 'deleteCurrentUpload']);
+        $this->router->get('/api/upload/current', [UploadController::class, 'getCurrentUpload']);
 
         // API routes for TranscriptionController
         $this->router->post('/api/transcription/start', [TranscriptionController::class, 'startTranscription']);

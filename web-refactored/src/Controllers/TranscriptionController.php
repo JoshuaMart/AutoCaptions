@@ -103,6 +103,9 @@ class TranscriptionController
         ) {
             $transcriptionData =
                 $transcriptionServiceResponse["body"]["transcription"];
+            
+            // Get processing time from the response
+            $processingTime = $transcriptionServiceResponse["body"]["processingTime"] ?? null;
 
             // Store the successful transcription data in the session
             $session->set("transcription_data", [
@@ -110,6 +113,7 @@ class TranscriptionController
                 "duration" => $transcriptionData["duration"] ?? null,
                 "language" => $transcriptionData["language"] ?? null,
                 "metadata" => $transcriptionData["metadata"] ?? [],
+                "processingTime" => $processingTime, // Store processing time at root level
                 "original_file_name" => $uploadedFileInfo["originalName"],
                 "processed_file_name" => $uploadedFileInfo["fileName"], // The name stored on server
                 "timestamp" => time(),

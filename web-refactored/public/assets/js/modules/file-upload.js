@@ -128,8 +128,24 @@ export class FileUpload {
         try {
             console.log('📁 FileUpload - Uploading file to server...');
             
+            // Get video duration before uploading
+            let videoDuration = null;
+            try {
+                videoDuration = await this.getVideoDuration(file);
+                console.log('📁 FileUpload - Video duration:', videoDuration);
+            } catch (error) {
+                console.warn('📁 FileUpload - Could not get video duration:', error);
+            }
+            
             const formData = new FormData();
             formData.append('videoFile', file);
+            
+            // Add video metadata
+            if (videoDuration !== null) {
+                formData.append('duration', videoDuration.toString());
+            }
+            formData.append('fileSize', file.size.toString());
+            formData.append('originalName', file.name);
 
             const response = await this.apiClient.post('/api/upload', formData);
 
@@ -137,12 +153,27 @@ export class FileUpload {
                 this.uploadId = response.data.uploadId;
                 console.log('✅ FileUpload - File uploaded with ID:', this.uploadId);
                 
+                // Store metadata locally
+                this.selectedFile.duration = videoDuration;
+                
+                // Store file info in sessionStorage for cross-page access
+                const fileInfo = {
+                    name: file.name,
+                    originalName: file.name,
+                    size: file.size,
+                    duration: videoDuration,
+                    uploadId: this.uploadId,
+                    uploadTimestamp: Date.now()
+                };
+                sessionStorage.setItem('uploaded_file_info', JSON.stringify(fileInfo));
+                
                 // Dispatch event for other modules
                 document.dispatchEvent(new CustomEvent('fileUploaded', {
                     detail: {
                         file: file,
                         uploadId: this.uploadId,
-                        serverPath: response.data.filePath
+                        serverPath: response.data.filePath,
+                        duration: videoDuration
                     }
                 }));
 
@@ -193,6 +224,9 @@ export class FileUpload {
         
         this.selectedFile = null;
         this.uploadId = null;
+        
+        // Clear sessionStorage
+        sessionStorage.removeItem('uploaded_file_info');
         
         if (this.fileInput) this.fileInput.value = '';
         if (this.fileInfo) this.fileInfo.classList.add('hidden');

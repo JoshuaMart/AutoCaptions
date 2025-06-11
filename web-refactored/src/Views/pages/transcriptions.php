@@ -54,6 +54,67 @@ $pageDescription =
     </div>
 </div>
 
+<!-- Video Information Card -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+            <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-medium text-gray-900" id="video-filename">
+                Loading video info...
+            </h3>
+            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                <span id="video-duration">Duration: --:--</span>
+                <span id="caption-count">Captions: --</span>
+                <span id="transcription-language">Language: --</span>
+                <span id="processing-time">Processing: --ms</span>
+            </div>
+        </div>
+
+        <!-- Transcription Settings -->
+        <div class="flex space-x-2">
+            <button type="button"
+                    onclick="autoSplitCaptions()"
+                    title="Auto-split long captions"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+            </button>
+
+            <button type="button"
+                    onclick="validateTimestamps()"
+                    title="Validate all timestamps"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </button>
+
+            <button type="button"
+                    onclick="exportTranscription()"
+                    title="Export transcription as JSON"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </button>
+
+            <button type="button"
+                    onclick="window.location.href='/'"
+                    title="Upload different video"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Transcription Generation Card -->
 <div id="transcription-generation-card" class="bg-white rounded-lg shadow-lg p-8 mb-8">
     <!-- Initial State: Generate Transcription -->
@@ -185,6 +246,46 @@ function proceedToServiceChoice() {
 
     // Redirect to service choice page
     window.location.href = '/service-choice';
+}
+
+// Functions for video info card buttons
+function autoSplitCaptions() {
+    if (app.transcriptionEditorUI && app.transcriptionEditorUI.autoSplitSegments) {
+        app.transcriptionEditorUI.autoSplitSegments();
+        app.showNotification('info', 'Auto Split', 'Long captions have been automatically split');
+    } else {
+        app.showNotification('warning', 'Not Available', 'Auto-split feature is not available yet');
+    }
+}
+
+function validateTimestamps() {
+    if (app.transcriptionEditorUI && app.transcriptionEditorUI.validateTimestamps) {
+        const result = app.transcriptionEditorUI.validateTimestamps();
+        if (result.valid) {
+            app.showNotification('success', 'Validation Complete', 'All timestamps are valid');
+        } else {
+            app.showNotification('error', 'Validation Failed', `Found ${result.errors.length} timestamp errors`);
+        }
+    } else {
+        app.showNotification('warning', 'Not Available', 'Timestamp validation feature is not available yet');
+    }
+}
+
+function exportTranscription() {
+    const transcriptionData = app.transcriptionUI.getTranscriptionData();
+    if (transcriptionData) {
+        const dataStr = JSON.stringify(transcriptionData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = 'transcription.json';
+        link.click();
+        
+        app.showNotification('success', 'Export Complete', 'Transcription exported as JSON file');
+    } else {
+        app.showNotification('error', 'Export Failed', 'No transcription data available to export');
+    }
 }
 
 // Initialize page when DOM is ready
