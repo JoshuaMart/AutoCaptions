@@ -1,54 +1,422 @@
-/**
- * TranscriptionEditorUI
- * Displays and manages the editing interface for transcription data.
- */
+// modules/transcription-editor-ui.js
+// Gère l'édition des transcriptions avec interface interactive
+
 export class TranscriptionEditorUI {
-    /**
-     * @param {ApiClient} apiClient - An instance of the ApiClient.
-     * @param {string} containerSelector - Selector for the main container where the transcription editor will be rendered.
-     * @param {string} segmentTemplateSelector - Selector for the HTML <template> element for a single segment.
-     * @param {string} wordTemplateSelector - Selector for the HTML <template> element for a single word.
-     */
-    constructor(apiClient, containerSelector, segmentTemplateSelector, wordTemplateSelector) {
+    constructor(apiClient) {
         this.apiClient = apiClient;
-        this.containerElement = document.querySelector(containerSelector);
-        this.segmentTemplate = document.querySelector(segmentTemplateSelector);
-        this.wordTemplate = document.querySelector(wordTemplateSelector);
+        this.transcriptionData = null;
+        this.isEditing = false;
+        this.hasUnsavedChanges = false;
 
-        if (!this.containerElement) {
-            console.warn(`TranscriptionEditorUI: Container element with selector \"${containerSelector}\" not found.`);
-        }
-         if (!this.segmentTemplate) {
-            console.warn(`TranscriptionEditorUI: Segment template with selector \"${segmentTemplateSelector}\" not found.`);
-        }
-         if (!this.wordTemplate) {
-            console.warn(`TranscriptionEditorUI: Word template with selector \"${wordTemplateSelector}\" not found.`);
-        }
-
-        this.transcriptionData = null; // To store the transcription data being edited
-        console.log("TranscriptionEditorUI initialized.");
+        // DOM elements
+        this.editorContainer = null;
+        this.saveButton = null;
+        
+        // Templates
+        this.segmentTemplate = null;
+        this.wordTemplate = null;
     }
 
-    /**
-     * Initializes the TranscriptionEditorUI module by setting up event listeners.
-     */
-    initialize() {
-        // Listen for the event dispatched after transcription is completed
-        document.addEventListener('transcriptionCompleted', this._handleTranscriptionCompleted.bind(this));
-        console.log("TranscriptionEditorUI event listener set up.");
+    async init() {
+        console.log('✏️ TranscriptionEditorUI - Initializing...');
+        
+        // Get DOM elements
+        this.editorContainer = document.getElementById('transcription-editor-container');
+        this.segmentTemplate = document.getElementById('transcription-segment-template');
+        this.wordTemplate = document.getElementById('transcription-word-template');
 
-        // TODO: Potentially add logic here to load existing transcription if it's already in session on page load
-        // This would involve calling apiClient.get('/api/transcription/current')
+        if (!this.editorContainer) {
+            console.warn('TranscriptionEditorUI - Editor container not found');
+            return;
+        }
+
+        this.setupEventListeners();
+        console.log('✅ TranscriptionEditorUI - Ready');
     }
 
-    /**
-     * Handles the custom transcriptionCompleted event.
-     * @param {CustomEvent} event - The transcriptionCompleted event containing transcription data.
-     */
-    _handleTranscriptionCompleted(event) {
-        console.log('TranscriptionEditorUI: Transcription completed event received.', event.detail);
-        if (event.detail && event.detail.transcription) {
-            this.transcriptionData = event.detail.transcription;
-            this._renderTranscription(this.transcriptionData.captions); // Assuming 'captions' array holds the segments/words
+    setupEventListeners() {
+        // Listen for transcription completion
+        document.addEventListener('transcriptionCompleted', (event) => {
+            this.loadTranscription(event.detail.data);
+        });
+
+        // Listen for file clearing
+        document.addEventListener('fileCleared', () => {
+            this.clearEditor();
+        });
+
+        // Setup save button if it exists
+        const saveButton = document.querySelector('button[onclick*="saveTranscription"]');
+        if (saveButton) {
+            saveButton.onclick = () => this.saveTranscription();
+        }
+    }
+
+    loadTranscription(transcriptionData) {
+        console.log('✏️ TranscriptionEditorUI - Loading transcription data');
+        
+        this.transcriptionData = transcriptionData;
+        this.renderEditor();
+        this.isEditing = true;
+        this.hasUnsavedChanges = false;
+    }
+
+    renderEditor() {
+        if (!this.editorContainer || !this.transcriptionData) return;
+
+        const captions = this.transcriptionData.transcription?.captions || [];
+        
+        if (captions.length === 0) {
+            this.editorContainer.innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Captions Found</h3>
+                    <p class="mt-1 text-sm text-gray-500">The transcription did not generate any captions to edit.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Group captions into segments for better editing
+        const segments = this.groupCaptionsIntoSegments(captions);
+        
+        let html = `
+            <div class="space-y-4">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Transcription Segments</h3>
+                        <p class="text-sm text-gray-500">${segments.length} segments • ${captions.length} words total</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="app.transcriptionEditorUI.addSegment()" 
+                                class="text-sm px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            Add Segment
+                        </button>
+                        <button onclick="app.transcriptionEditorUI.validateTimestamps()" 
+                                class="text-sm px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                            Validate Times
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="segments-container" class="space-y-4">
+                    ${segments.map((segment, index) => this.renderSegment(segment, index)).join('')}
+                </div>
+            </div>
+        `;
+
+        this.editorContainer.innerHTML = html;
+        this.setupSegmentEventListeners();
+    }
+
+    groupCaptionsIntoSegments(captions) {
+        // Group captions into logical segments (sentences or pauses)
+        const segments = [];
+        let currentSegment = [];
+        
+        for (let i = 0; i < captions.length; i++) {
+            const caption = captions[i];
+            currentSegment.push(caption);
+            
+            // End segment on punctuation or long pause
+            const hasEndPunctuation = /[.!?]$/.test(caption.text?.trim() || '');
+            const nextCaption = captions[i + 1];
+            const longPause = nextCaption && (nextCaption.startMs - caption.endMs) > 1000; // 1 second pause
+            
+            if (hasEndPunctuation || longPause || currentSegment.length >= 15) {
+                segments.push({
+                    words: [...currentSegment],
+                    startMs: currentSegment[0].startMs,
+                    endMs: currentSegment[currentSegment.length - 1].endMs
+                });
+                currentSegment = [];
+            }
+        }
+        
+        // Add remaining words as final segment
+        if (currentSegment.length > 0) {
+            segments.push({
+                words: [...currentSegment],
+                startMs: currentSegment[0].startMs,
+                endMs: currentSegment[currentSegment.length - 1].endMs
+            });
+        }
+        
+        return segments;
+    }
+
+    renderSegment(segment, index) {
+        const startTime = this.formatTimestamp(segment.startMs);
+        const endTime = this.formatTimestamp(segment.endMs);
+        const text = segment.words.map(word => word.text || '').join('');
+
+        return `
+            <div class="bg-gray-50 rounded-lg p-4 segment" data-segment-index="${index}">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex space-x-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Start</label>
+                            <input type="text" 
+                                   class="segment-start-time w-24 text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   value="${startTime}"
+                                   onchange="app.transcriptionEditorUI.updateSegmentTime(${index}, 'start', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">End</label>
+                            <input type="text" 
+                                   class="segment-end-time w-24 text-xs px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   value="${endTime}"
+                                   onchange="app.transcriptionEditorUI.updateSegmentTime(${index}, 'end', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                            <span class="text-xs text-gray-500 px-2 py-1 bg-gray-200 rounded">${this.formatDuration(segment.endMs - segment.startMs)}</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="app.transcriptionEditorUI.splitSegment(${index})" 
+                                class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                title="Split this segment">
+                            Split
+                        </button>
+                        <button onclick="app.transcriptionEditorUI.mergeWithPrevious(${index})" 
+                                class="text-xs px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                title="Merge with previous segment"
+                                ${index === 0 ? 'disabled' : ''}>
+                            Merge
+                        </button>
+                        <button onclick="app.transcriptionEditorUI.deleteSegment(${index})" 
+                                class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                title="Delete this segment">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="segment-text-editor border border-gray-300 rounded p-3 min-h-16 focus-within:ring-2 focus-within:ring-blue-500 bg-white" 
+                     contenteditable="true"
+                     data-segment="${index}"
+                     onblur="app.transcriptionEditorUI.updateSegmentText(${index}, this.textContent)">
+                    ${this.escapeHtml(text)}
+                </div>
+                
+                <div class="mt-2 text-xs text-gray-500">
+                    ${segment.words.length} words • Click text above to edit
+                </div>
+            </div>
+        `;
+    }
+
+    setupSegmentEventListeners() {
+        // Add event listeners for text editing
+        const textEditors = document.querySelectorAll('.segment-text-editor');
+        textEditors.forEach(editor => {
+            editor.addEventListener('input', () => {
+                this.hasUnsavedChanges = true;
+                this.updateSaveButtonState();
+            });
+        });
+    }
+
+    updateSegmentTime(segmentIndex, type, value) {
+        if (!this.transcriptionData?.transcription?.captions) return;
+
+        try {
+            const milliseconds = this.parseTimestamp(value);
+            const segments = this.groupCaptionsIntoSegments(this.transcriptionData.transcription.captions);
+            
+            if (segments[segmentIndex]) {
+                if (type === 'start') {
+                    segments[segmentIndex].startMs = milliseconds;
+                    // Update all words in this segment
+                    segments[segmentIndex].words.forEach((word, i) => {
+                        if (i === 0) word.startMs = milliseconds;
+                    });
+                } else if (type === 'end') {
+                    segments[segmentIndex].endMs = milliseconds;
+                    // Update last word in segment
+                    const lastWord = segments[segmentIndex].words[segments[segmentIndex].words.length - 1];
+                    if (lastWord) lastWord.endMs = milliseconds;
+                }
+                
+                this.hasUnsavedChanges = true;
+                this.updateSaveButtonState();
+                console.log(`✏️ Updated segment ${segmentIndex} ${type} time to ${value}`);
+            }
+        } catch (error) {
+            console.error('✏️ Invalid timestamp format:', value);
+            window.app.showNotification('error', 'Invalid Time', 'Please use format: MM:SS.mmm');
+        }
+    }
+
+    updateSegmentText(segmentIndex, newText) {
+        console.log(`✏️ Updating segment ${segmentIndex} text:`, newText);
+        
+        // For now, just mark as changed
+        // In a full implementation, we would split the text back into words
+        // and update the individual word timings proportionally
+        
+        this.hasUnsavedChanges = true;
+        this.updateSaveButtonState();
+    }
+
+    splitSegment(segmentIndex) {
+        console.log(`✏️ Splitting segment ${segmentIndex}`);
+        window.app.showNotification('info', 'Feature Coming Soon', 'Segment splitting will be implemented soon');
+    }
+
+    mergeWithPrevious(segmentIndex) {
+        if (segmentIndex === 0) return;
+        
+        console.log(`✏️ Merging segment ${segmentIndex} with previous`);
+        window.app.showNotification('info', 'Feature Coming Soon', 'Segment merging will be implemented soon');
+    }
+
+    deleteSegment(segmentIndex) {
+        if (!confirm('Are you sure you want to delete this segment?')) return;
+        
+        console.log(`✏️ Deleting segment ${segmentIndex}`);
+        window.app.showNotification('info', 'Feature Coming Soon', 'Segment deletion will be implemented soon');
+    }
+
+    addSegment() {
+        console.log('✏️ Adding new segment');
+        window.app.showNotification('info', 'Feature Coming Soon', 'Adding segments will be implemented soon');
+    }
+
+    validateTimestamps() {
+        console.log('✏️ Validating timestamps');
+        
+        let hasErrors = false;
+        const segments = this.groupCaptionsIntoSegments(this.transcriptionData?.transcription?.captions || []);
+        
+        for (let i = 0; i < segments.length; i++) {
+            const segment = segments[i];
+            
+            // Check if end time is after start time
+            if (segment.endMs <= segment.startMs) {
+                hasErrors = true;
+                console.error(`Segment ${i}: End time must be after start time`);
+            }
+            
+            // Check if segments overlap
+            if (i > 0 && segment.startMs < segments[i-1].endMs) {
+                hasErrors = true;
+                console.error(`Segment ${i}: Overlaps with previous segment`);
+            }
+        }
+        
+        if (hasErrors) {
+            window.app.showNotification('error', 'Validation Failed', 'Found timing errors in segments');
         } else {
-             console.error(\'TranscriptionEditorUI: Received transcriptionCompleted event but no transcription data found in detail.\', event.detail);\n         }\n     }\n\n     /**\n      * Renders the transcription data into the editor container.\n      * @param {Array<object>} captions - The array of caption objects (segments/words).\n      */\n    _renderTranscription(captions) {\n        if (!this.containerElement || !captions) {\n            console.warn(\'TranscriptionEditorUI: Cannot render transcription. Container or captions data is missing.\');\n            return;\n        }\n\n        this.containerElement.innerHTML = \'\'; // Clear previous content\n\n        // Simple grouping logic: assume each entry in 'captions' array from the service is a word or a short phrase.\n        // A more advanced editor would group words into lines/segments based on timing and potentially UI width.\n        // For now, let\'s treat each 'caption' entry as a renderable unit, perhaps grouping them visually into segments.\n        // Let\'s assume the structure from the transcription service provides words or small groups already.\n        // Based on the transcription service README, the 'captions' array contains objects with text, startMs, endMs.\n        // We will treat each entry as a 'word' for now and group them into simple segments.\n\n        let segmentIndex = 0;\n        let currentSegmentElement = null;\n\n        captions.forEach((caption, index) => {\n            // Basic heuristic: Start a new segment if the previous caption ended more than X ms ago,\n            // or if it's the very first caption.\n            const previousCaption = index > 0 ? captions[index - 1] : null;\n            const segmentBreakThreshold = 500; // ms, heuristic for detecting pauses between spoken phrases\n\n            if (!currentSegmentElement || (previousCaption && (caption.startMs - previousCaption.endMs > segmentBreakThreshold))) {\n                // Start a new segment\n                segmentIndex++;\n                if (currentSegmentElement) {\n                     // Optional: Add a visual separator between segments\n                     // const separator = document.createElement(\'hr\');\n                     // this.containerElement.appendChild(separator);\n                }\n\n                if (this.segmentTemplate) {\n                     const templateContent = this.segmentTemplate.content;\n                     currentSegmentElement = document.importNode(templateContent, true).firstElementChild;\n                     if (currentSegmentElement) {\n                         currentSegmentElement.dataset.segmentIndex = segmentIndex.toString();\n                         // Find and populate segment timing inputs\n                         const startTimeInput = currentSegmentElement.querySelector(\'.segment-start-time\');\n                         const endTimeInput = currentSegmentElement.querySelector(\'.segment-end-time\');\n\n                         if (startTimeInput) startTimeInput.value = this._formatTime(caption.startMs); // Start time of the first word\n                         if (endTimeInput && captions[index+1]) endTimeInput.value = this._formatTime(captions[captions.length-1].endMs); // Placeholder: end time of the last word in this segment (needs refinement)\n\n                         const textEditor = currentSegmentElement.querySelector(\'.segment-text-editor\');\n                         if (textEditor) {\n                             textEditor.contentEditable = \"true\"; // Make the text area editable\n                              // Event listener for input changes on the editable div (more complex than inputs)\n                             textEditor.addEventListener(\'input\', this._handleSegmentInputChange.bind(this, segmentIndex));\n                         }\n\n                          // Add event listeners to segment action buttons if they exist in the template\n                         const splitButton = currentSegmentElement.querySelector(\'.button-split-segment\');\n                         if (splitButton) splitButton.addEventListener(\'click\', () => this._handleSplitSegment(segmentIndex));\n                         const mergeButton = currentSegmentElement.querySelector(\'.button-merge-segment-prev\');\n                         if (mergeButton) mergeButton.addEventListener(\'click\', () => this._handleMergeSegmentWithPrevious(segmentIndex));\n                         const deleteButton = currentSegmentElement.querySelector(\'.button-delete-segment\');\n                         if (deleteButton) deleteButton.addEventListener(\'click\', () => this._handleDeleteSegment(segmentIndex));\n\n                         this.containerElement.appendChild(currentSegmentElement);\n                     } else {\n                          console.error(\'TranscriptionEditorUI: Failed to create segment element from template.\');\n                          currentSegmentElement = null; // Fallback might be needed or stop rendering\n                     }\n                } else { // Fallback if no segment template\n                     const basicSegment = document.createElement(\'div\');\n                     basicSegment.className = \'segment basic-segment\';\n                     basicSegment.dataset.segmentIndex = segmentIndex.toString();\n                      const textEditor = document.createElement(\'div\');\n                     textEditor.className = \'segment-text-editor basic\';\n                     textEditor.contentEditable = \"true\";\n                      textEditor.addEventListener(\'input\', this._handleSegmentInputChange.bind(this, segmentIndex));\n                     basicSegment.appendChild(textEditor);\n                     this.containerElement.appendChild(basicSegment);\n                     currentSegmentElement = basicSegment; // Set current segment to the basic one\n                      console.warn(\'TranscriptionEditorUI: Using basic segment rendering. Provide a template for full features.\');\n                }\n            }\n\n            // Add the word/caption to the current segment\n            if (currentSegmentElement) {\n                const textEditor = currentSegmentElement.querySelector(\'.segment-text-editor\');\n                if (textEditor) {\n                    const wordElement = this._createWordElement(caption);\n                    if (wordElement) {\n                         // Add a space before the word, unless it's the first word in the segment\n                         if (textEditor.children.length > 0) {\n                             textEditor.appendChild(document.createTextNode(\' \'));\n                         }\n                        textEditor.appendChild(wordElement);\n                    }\n                }\n                // Update the end time of the segment based on the current word's end time\n                const endTimeInput = currentSegmentElement.querySelector(\'.segment-end-time\');\n                if (endTimeInput) { // Update with the latest word's end time\n                    endTimeInput.value = this._formatTime(caption.endMs);\n                }\n            }\n        });\n\n        console.log(`TranscriptionEditorUI: Rendered ${captions.length} captions into ${segmentIndex} segments.`);\n    }\n\n    /**\n     * Creates an HTML element for a single word/caption.\n     * @param {object} caption - The caption object { text, startMs, endMs }.\n     * @returns {HTMLElement|null} The created word element.\n     */\n    _createWordElement(caption) {\n        if (!this.wordTemplate) {\n             const span = document.createElement(\'span\');\n             span.className = \'word basic\';\n             span.textContent = caption.text;\n             span.dataset.startMs = caption.startMs.toString();\n             span.dataset.endMs = caption.endMs.toString();\n             // span.contentEditable = \"true\"; // Make words individually editable? More complex.\n             return span;\n             // console.warn(\'TranscriptionEditorUI: Using basic word rendering. Provide a template for full features.\');\n        }\n\n        try {\n            const templateContent = this.wordTemplate.content;\n            const wordElement = document.importNode(templateContent, true).firstElementChild;\n\n            if (wordElement) {\n                 wordElement.textContent = caption.text;\n                 wordElement.dataset.startMs = caption.startMs.toString();\n                 wordElement.dataset.endMs = caption.endMs.toString();\n                 // wordElement.contentEditable = \"false\"; // Set based on template attribute or here\n                 return wordElement;\n            } else {\n                console.error(\'TranscriptionEditorUI: Failed to create word element from template.\');\n                return null;\n            }\n        } catch (e) {\n            console.error(\'TranscriptionEditorUI: Error using word template:\', e);\n            // Fallback to basic rendering on error\n             const span = document.createElement(\'span\');\n             span.className = \'word basic fallback\';\n             span.textContent = caption.text;\n             span.dataset.startMs = caption.startMs.toString();\n             span.dataset.endMs = caption.endMs.toString();\n             return span;\n        }\n    }\n\n    /**\n     * Placeholder: Handle input changes in a contenteditable segment.\n     * @param {number} segmentIndex - The index of the segment being edited.\n     * @param {Event} event - The input event.\n     */\n    _handleSegmentInputChange(segmentIndex, event) {\n        // This is complex. Changes in a contenteditable div don't easily map back to the original word/timing structure.\n        // A robust editor would need to re-parse the content, potentially re-aligning text to timings.\n        console.log(`Segment ${segmentIndex} input changed. Current text:`, event.target.textContent);\n        // TODO: Implement logic to capture changes and update the internal transcriptionData model.\n    }\n\n     /**\n      * Placeholder: Handle split segment button click.\n      * @param {number} segmentIndex - The index of the segment to split.\n      */\n     _handleSplitSegment(segmentIndex) {\n         console.log(`Split segment ${segmentIndex} requested.`);\n         // TODO: Implement splitting logic (needs complex text/timing manipulation)\n     }\n\n      /**\n      * Placeholder: Handle merge segment button click.\n      * @param {number} segmentIndex - The index of the segment to merge (with the previous one).\n      */\n     _handleMergeSegmentWithPrevious(segmentIndex) {\n         console.log(`Merge segment ${segmentIndex} with previous requested.`);\n          // TODO: Implement merging logic\n     }\n\n      /**\n      * Placeholder: Handle delete segment button click.\n      * @param {number} segmentIndex - The index of the segment to delete.\n      */\n     _handleDeleteSegment(segmentIndex) {\n         console.log(`Delete segment ${segmentIndex} requested.`);\n          // TODO: Implement deletion logic\n     }\n\n    /**\n     * Formats milliseconds into HH:MM:SS.ms or MM:SS.ms.\n     * @param {number} ms - Time in milliseconds.\n     * @returns {string} Formatted time string.\n     */\n    _formatTime(ms) {\n        const totalSeconds = Math.floor(ms / 1000);\n        const milliseconds = ms % 1000;\n        const seconds = totalSeconds % 60;\n        const minutes = Math.floor(totalSeconds / 60) % 60;\n        const hours = Math.floor(totalSeconds / 3600);\n\n        const pad = (num, length = 2) => num.toString().padStart(length, '0');\n\n        if (hours > 0) {\n            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(milliseconds, 3)}`;\n        } else {\n            return `${pad(minutes)}:${pad(seconds)}.${pad(milliseconds, 3)}`;\n        }\n    }\n\n    // Future methods:\n    // - saveChanges(): Sends edited transcription data back to the backend.\n    // - updateTiming(): Allows editing segment/word timings.\n    // - syncWithVideo(): Highlight words/segments as video plays.\n    // - loadTranscription(data): Method to load transcription data directly if fetched separately.\n}\n```
+            window.app.showNotification('success', 'Validation Passed', 'All timestamps are valid');
+        }
+    }
+
+    async saveTranscription() {
+        if (!this.hasUnsavedChanges) {
+            window.app.showNotification('info', 'No Changes', 'No changes to save');
+            return;
+        }
+
+        try {
+            console.log('✏️ Saving transcription changes...');
+            
+            // For now, just save to session storage as placeholder
+            // In full implementation, this would send to the backend
+            
+            const response = await this.apiClient.post('/api/transcription/save', {
+                transcriptionData: this.transcriptionData
+            });
+
+            if (response.success) {
+                this.hasUnsavedChanges = false;
+                this.updateSaveButtonState();
+                window.app.showNotification('success', 'Saved', 'Transcription changes saved successfully');
+            } else {
+                throw new Error(response.error || 'Save failed');
+            }
+            
+        } catch (error) {
+            console.error('✏️ Save failed:', error);
+            window.app.showNotification('error', 'Save Failed', error.message);
+        }
+    }
+
+    updateSaveButtonState() {
+        const saveButton = document.querySelector('button[onclick*="saveTranscription"]');
+        if (saveButton) {
+            if (this.hasUnsavedChanges) {
+                saveButton.classList.remove('bg-gray-400');
+                saveButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                saveButton.disabled = false;
+                saveButton.innerHTML = saveButton.innerHTML.replace('Save Changes', 'Save Changes *');
+            } else {
+                saveButton.classList.add('bg-gray-400');
+                saveButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                saveButton.disabled = true;
+                saveButton.innerHTML = saveButton.innerHTML.replace(' *', '');
+            }
+        }
+    }
+
+    clearEditor() {
+        if (this.editorContainer) {
+            this.editorContainer.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <p>Upload a video and generate transcription to start editing</p>
+                </div>
+            `;
+        }
+        
+        this.transcriptionData = null;
+        this.isEditing = false;
+        this.hasUnsavedChanges = false;
+    }
+
+    // Utility functions
+    formatTimestamp(milliseconds) {
+        const totalSeconds = milliseconds / 1000;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const ms = Math.floor((milliseconds % 1000));
+        
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    }
+
+    parseTimestamp(timeString) {
+        const match = timeString.match(/^(\d{1,2}):(\d{2})\.(\d{3})$/);
+        if (!match) {
+            throw new Error('Invalid timestamp format');
+        }
+        
+        const [, minutes, seconds, milliseconds] = match;
+        return (parseInt(minutes) * 60 + parseInt(seconds)) * 1000 + parseInt(milliseconds);
+    }
+
+    formatDuration(milliseconds) {
+        const seconds = (milliseconds / 1000).toFixed(1);
+        return `${seconds}s`;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Public API
+    getTranscriptionData() {
+        return this.transcriptionData;
+    }
+
+    hasUnsavedChanges() {
+        return this.hasUnsavedChanges;
+    }
+
+    isCurrentlyEditing() {
+        return this.isEditing;
+    }
+}

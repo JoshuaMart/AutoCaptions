@@ -1,307 +1,269 @@
-/* AutoCaptions/web-refactored/public/assets/css/app.css */
+/* AutoCaptions Web Refactored - Minimal CSS */
+/* La plupart du styling est maintenant géré par Tailwind CSS */
 
-/* Basic Reset */
+/* Reset minimal pour la cohérence entre navigateurs */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    line-height: 1.6;
-    background-color: #f8f9fa; /* Light gray background */
-    color: #212529; /* Dark text color */
+/* Custom utilities et classes spéciales qui ne sont pas dans Tailwind */
+
+/* Classes pour les animations personnalisées */
+.animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Classe pour la zone de drop de fichier */
+.file-drop-zone {
+    transition: all 0.3s ease;
+}
+
+.file-drop-zone.drag-over {
+    @apply border-blue-500 bg-blue-50;
+}
+
+/* Animations pour les notifications */
+.notification-enter {
+    transform: translateX(100%);
+}
+
+.notification-enter-active {
+    transform: translateX(0);
+    transition: transform 0.3s ease-out;
+}
+
+.notification-exit {
+    transform: translateX(0);
+}
+
+.notification-exit-active {
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in;
+}
+
+/* Styles pour l'éditeur de transcription */
+.segment {
+    transition: all 0.2s ease;
+}
+
+.segment:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.segment-text-editor:focus {
+    outline: none;
+}
+
+.word {
+    transition: background-color 0.2s ease;
+}
+
+.word:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Styles pour les indicateurs de statut des services */
+[data-service-dot] {
+    transition: all 0.2s ease;
+}
+
+[data-service] {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+[data-service]:hover {
+    opacity: 0.8;
+}
+
+/* Styles pour les modales */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+/* Styles pour les barres de progression personnalisées */
+.progress-bar-custom {
+    background-color: #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    height: 1.5rem;
+    position: relative;
+}
+
+.progress-bar-custom-inner {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    height: 100%;
     display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: width 0.3s ease;
+    min-width: 2rem;
 }
 
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
+/* Styles pour les tooltips */
+#service-status-tooltip {
+    z-index: 9999;
+    pointer-events: none;
 }
 
-header {
-    background: #343a40; /* Dark header background */
-    color: #ffffff;
-    padding: 1.5rem 0;
-    text-align: center;
-    border-bottom: 3px solid #007bff; /* Accent color */
+/* Styles pour les sélecteurs de couleur */
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    cursor: pointer;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 2.5rem;
-}
-
-nav ul {
-    list-style-type: none;
+input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 0;
-    text-align: center;
-    margin-top: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
 }
 
-nav ul li {
-    display: inline;
-    margin-right: 15px;
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 0.25rem;
 }
 
-nav ul li a {
-    color: #f8f9fa;
-    text-decoration: none;
-    font-size: 1.1rem;
+/* Styles pour les sliders de range */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
 }
 
-nav ul li a:hover {
-    color: #007bff;
+input[type="range"]::-webkit-slider-track {
+    background: #e5e7eb;
+    height: 0.5rem;
+    border-radius: 0.25rem;
 }
 
-main.container {
-    flex-grow: 1;
-    padding-top: 20px;
-    padding-bottom: 20px;
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #3b82f6;
+    height: 1.25rem;
+    width: 1.25rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-footer {
-    background: #343a40; /* Consistent with header */
-    color: #ffffff;
-    text-align: center;
-    padding: 1.5rem 0;
-    margin-top: auto; /* Pushes footer to the bottom */
+input[type="range"]::-moz-range-track {
+    background: #e5e7eb;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    border: none;
 }
 
-/* Utility Classes */
-.hidden {
+input[type="range"]::-moz-range-thumb {
+    background: #3b82f6;
+    height: 1.25rem;
+    width: 1.25rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+/* Focus states pour l'accessibilité */
+.focus-ring:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* Styles pour les cards de sélection de service */
+.service-card {
+    transition: all 0.2s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.service-card.selected {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Styles pour les templates cachés */
+template {
     display: none !important;
 }
 
-/* Status Messages */
-.status-message {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: .25rem;
-    font-size: 0.95rem;
+/* Responsive fixes pour les petits écrans */
+@media (max-width: 640px) {
+    .service-status-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .segment {
+        padding: 0.75rem;
+    }
+    
+    .segment .flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 }
 
-.status-info {
-    color: #0c5460;
-    background-color: #d1ecf1;
-    border-color: #bee5eb;
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
 }
 
-.status-success {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .bg-gray-50 {
+        background-color: white;
+    }
+    
+    .text-gray-500 {
+        color: #374151;
+    }
+    
+    .border-gray-300 {
+        border-color: #000;
+    }
 }
 
-.status-error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .animate-spin,
+    .animate-pulse,
+    .animate-pulse-slow {
+        animation: none;
+    }
+    
+    .transition-all,
+    .transition-colors,
+    .transition-transform {
+        transition: none;
+    }
 }
 
-/* Forms and Inputs */
-form {
-    background: #ffffff;
-    padding: 2rem;
-    border-radius: 5px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+/* Dark mode préparation (si nécessaire dans le futur) */
+@media (prefers-color-scheme: dark) {
+    /* Pour l'instant, on garde le thème clair */
+    /* Mais on peut préparer les variables pour un thème sombre */
 }
 
-form label {
-    display: block;
-    margin-bottom: .5rem;
-    font-weight: bold;
+/* Utilities pour le debug (à supprimer en production) */
+.debug-outline {
+    outline: 2px solid red !important;
 }
 
-form input[type="file"],
-form input[type="text"],
-form input[type="url"],
-form select {
-    width: 100%;
-    padding: .75rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ced4da;
-    border-radius: .25rem;
-    font-size: 1rem;
-}
-
-form button[type="submit"],
-.button {
-    display: inline-block;
-    background-color: #007bff;
-    color: white;
-    padding: .75rem 1.5rem;
-    border: none;
-    border-radius: .25rem;
-    cursor: pointer;
-    font-size: 1rem;
-    text-decoration: none;
-    text-align: center;
-}
-
-form button[type="submit"]:hover,
-.button:hover {
-    background-color: #0056b3;
-}
-
-/* Progress Bar */
-#uploadProgress { /* Assuming this is a <progress> element or a div wrapper */
-    width: 100%;
-    height: 25px;
-    margin-bottom: 1rem;
-    border-radius: .25rem;
-    overflow: hidden; /* For custom div progress bar */
-}
-/* Styling for native <progress> element */
-progress {
-    appearance: none; /* Disables default styling */
-    width: 100%;
-    height: 25px;
-    border-radius: .25rem;
-    border: 1px solid #007bff;
-}
-progress::-webkit-progress-bar {
-    background-color: #e9ecef;
-    border-radius: .25rem;
-}
-progress::-webkit-progress-value {
-    background-color: #007bff;
-    border-radius: .25rem;
-    transition: width 0.3s ease-in-out;
-}
-progress::-moz-progress-bar { /* Firefox */
-    background-color: #007bff;
-    border-radius: .25rem;
-    transition: width 0.3s ease-in-out;
-}
-
-/* Custom div progress bar (if #uploadProgress is a div) */
-/*
-#uploadProgress .progress-bar-inner {
-    height: 100%;
-    background-color: #007bff;
-    width: 0%; Default width
-    border-radius: .25rem;
-    transition: width 0.3s ease-in-out;
-    text-align: center;
-    color: white;
-    line-height: 25px;
-}
-*/
-
-/* Service Status Styling */
-#serviceStatusContainer {
-    background: #ffffff;
-    padding: 1.5rem;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
-}
-
-#serviceStatusContainer h2 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    color: #343a40;
-}
-
-.service-status-list {
-    list-style: none;
-    padding: 0;
-}
-
-.service-status-item {
-    border: 1px solid #e9ecef;
-    padding: 1rem;
-    margin-bottom: .75rem;
-    border-radius: .25rem;
-    background-color: #f8f9fa;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.service-status-item .service-name {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.service-status-item .service-health {
-    font-weight: bold;
-    padding: .25rem .5rem;
-    border-radius: .25rem;
-    font-size: 0.9rem;
-}
-
-.service-status-item.status-healthy .service-health {
-    color: #155724;
-    background-color: #d4edda;
-}
-
-.service-status-item.status-unhealthy .service-health,
-.service-status-item.status-error .service-health {
-    color: #721c24;
-    background-color: #f8d7da;
-}
-.service-status-item.status-unknown .service-health {
-    color: #383d41;
-    background-color: #e2e3e5;
-}
-
-
-.service-status-item .service-details {
-    font-size: 0.85em;
-    color: #6c757d; /* Muted color for details */
-    margin-top: .5rem;
-    flex-basis: 100%; /* Make details take full width below name/status */
-}
-.service-status-item .service-uptime {
-    font-size: 0.8em;
-    color: #495057;
-    margin-top: .25rem;
-    flex-basis: 100%;
-}
-
-
-.status-loading {
-    font-style: italic;
-    color: #6c757d;
-}
-
-.button-retry-status,
-.button-refresh-status {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: .5rem 1rem;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 0.9rem;
-    margin-top: 1rem;
-    cursor: pointer;
-    border-radius: .25rem;
-}
-
-.button-retry-status:hover,
-.button-refresh-status:hover {
-    background-color: #5a6268;
-}
-
-/* Sections for better layout */
-.section {
-    margin-bottom: 2rem;
-}
-.section-title {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-    color: #007bff;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: .5rem;
+.debug-bg {
+    background-color: rgba(255, 0, 0, 0.1) !important;
 }

@@ -1,159 +1,296 @@
-/**
- * ApiClient
- * A simple client for making HTTP requests to the backend API.
- */
+// modules/api-client.js
+// Client API pour communiquer avec le backend PHP refactorisé
+
 export class ApiClient {
-    constructor(baseApiUrl = '/api') {
-        this.baseApiUrl = baseApiUrl.endsWith('/') ? baseApiUrl.slice(0, -1) : baseApiUrl;
+    constructor() {
+        this.baseUrl = window.location.origin;
+        this.defaultHeaders = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        
+        // Configuration
+        this.config = {
+            timeout: 30000, // 30 seconds
+            retryAttempts: 3,
+            retryDelay: 1000 // 1 second
+        };
     }
 
-    /**
-     * Constructs the full API URL.
-     * @param {string} endpoint - The API endpoint (e.g., '/users').
-     * @returns {string} The full API URL.
-     */
-    _buildUrl(endpoint) {
-        return `${this.baseApiUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-    }
-
-    /**
-     * Performs an HTTP request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {string} method - The HTTP method (GET, POST, PUT, DELETE, etc.).
-     * @param {object|FormData} [body=null] - The request body for POST, PUT, PATCH.
-     * @param {object} [customHeaders={}] - Custom headers to include.
-     * @returns {Promise<object>} A promise that resolves with the JSON response or rejects with an error.
-     */
-    async request(endpoint, method = 'GET', body = null, customHeaders = {}) {
-        const url = this._buildUrl(endpoint);
-        const options = {
+    async request(method, endpoint, data = null, options = {}) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const config = {
             method: method.toUpperCase(),
-            headers: {
-                // 'X-Requested-With': 'XMLHttpRequest', // Common header for AJAX requests
-                ...customHeaders, // Allow overriding default headers or adding new ones
-            },
+            headers: { ...this.defaultHeaders },
+            ...options
         };
 
-        // Set Content-Type for JSON, unless it's FormData
-        if (body && !(body instanceof FormData)) {
-            if (!options.headers['Content-Type']) {
-                options.headers['Content-Type'] = 'application/json';
-            }
-            options.body = JSON.stringify(body);
-        } else if (body instanceof FormData) {
-            // For FormData, 'Content-Type' is set automatically by the browser with the boundary.
-            // Do not set it manually here.
-            options.body = body;
+        // Add CSRF token if available
+        const csrfToken = this.getCSRFToken();
+        if (csrfToken) {
+            config.headers['X-CSRF-Token'] = csrfToken;
         }
 
-        // TODO: Add CSRF token handling if needed
-        // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        // if (csrfToken && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method)) {
-        //     options.headers['X-CSRF-TOKEN'] = csrfToken;
-        // }
+        // Handle different data types
+        if (data) {
+            if (data instanceof FormData) {
+                // Don't set Content-Type for FormData, let browser set it with boundary
+                config.body = data;
+            } else if (typeof data === 'object') {
+                config.headers['Content-Type'] = 'application/json';
+                config.body = JSON.stringify(data);
+            } else {
+                config.body = data;
+            }
+        }
 
         try {
-            const response = await fetch(url, options);
+            console.log(`🌐 API Request: ${method} ${endpoint}`);
+            
+            const response = await this.fetchWithTimeout(url, config);
+            return await this.handleResponse(response);
+            
+        } catch (error) {
+            console.error(`🌐 API Error: ${method} ${endpoint}`, error);
+            throw this.normalizeError(error);
+        }
+    }
 
-            if (!response.ok) {
-                let errorData;
-                try {
-                    // Try to parse error response as JSON
-                    errorData = await response.json();
-                } catch (e) {
-                    // If not JSON, use text
-                    errorData = { message: await response.text() || response.statusText };
-                }
-                // Construct a more informative error object
-                const error = new Error(errorData.message || `HTTP error ${response.status}`);
-                error.status = response.status;
-                error.response = response; // Full response object
-                error.data = errorData;    // Parsed error data from server
-                throw error;
+    async fetchWithTimeout(url, config) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+        
+        try {
+            const response = await fetch(url, {
+                ...config,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout');
             }
+            throw error;
+        }
+    }
 
-            // Handle cases where the response might be empty (e.g., 204 No Content)
-            if (response.status === 204) {
-                return null; // Or return a specific success object: { success: true, data: null }
+    async handleResponse(response) {
+        const contentType = response.headers.get('Content-Type') || '';
+        
+        try {
+            if (contentType.includes('application/json')) {
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error?.message || data.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return data;
+                
+            } else if (contentType.includes('video/') || contentType.includes('image/')) {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return {
+                    success: true,
+                    blob: await response.blob(),
+                    contentType: contentType
+                };
+                
+            } else {
+                const text = await response.text();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return {
+                    success: true,
+                    text: text,
+                    contentType: contentType
+                };
             }
             
-            // Check content type before parsing as JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            } else {
-                // If not JSON, return text or blob as appropriate, or handle as error
-                // For now, let's assume JSON is expected for most successful data responses.
-                // If text is valid, then: return await response.text();
-                // For this client, we'll primarily expect JSON.
-                console.warn(`Response from ${url} was not JSON. Content-Type: ${contentType}`);
-                return await response.text(); // Fallback to text if not JSON
+        } catch (error) {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            throw error;
+        }
+    }
+
+    normalizeError(error) {
+        if (error.message) {
+            return new Error(error.message);
+        }
+        return new Error('Network request failed');
+    }
+
+    getCSRFToken() {
+        // Try to get CSRF token from meta tag or cookie
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        // Fallback to cookie
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'csrf_token') {
+                return decodeURIComponent(value);
+            }
+        }
+        
+        return null;
+    }
+
+    // Convenience methods for common HTTP verbs
+    async get(endpoint, options = {}) {
+        return this.request('GET', endpoint, null, options);
+    }
+
+    async post(endpoint, data = null, options = {}) {
+        return this.request('POST', endpoint, data, options);
+    }
+
+    async put(endpoint, data = null, options = {}) {
+        return this.request('PUT', endpoint, data, options);
+    }
+
+    async patch(endpoint, data = null, options = {}) {
+        return this.request('PATCH', endpoint, data, options);
+    }
+
+    async delete(endpoint, options = {}) {
+        return this.request('DELETE', endpoint, null, options);
+    }
+
+    // Helper method to download files
+    async downloadFile(endpoint, filename = null) {
+        try {
+            const response = await this.get(endpoint);
+            
+            if (response.blob) {
+                const url = window.URL.createObjectURL(response.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename || 'download';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                return true;
+            }
+            
+            throw new Error('Invalid file response');
+            
+        } catch (error) {
+            console.error('🌐 Download failed:', error);
+            throw error;
+        }
+    }
+
+    // Method to call microservices through the PHP proxy (similar to original API.call)
+    async callService(service, endpoint, method = 'GET', data = null, files = null) {
+        const url = `/api/proxy/${service}/${endpoint}`;
+        
+        if (files || (data && data instanceof FormData)) {
+            const formData = data instanceof FormData ? data : new FormData();
+            
+            if (files) {
+                Object.keys(files).forEach(key => {
+                    formData.append(key, files[key]);
+                });
+            }
+            
+            return this.request(method, url, formData);
+        }
+        
+        return this.request(method, url, data);
+    }
+
+    // Health check for all services
+    async checkServicesHealth() {
+        return this.get('/api/config/services/status');
+    }
+
+    // Configuration management
+    async getServicesConfig() {
+        return this.get('/api/config/services');
+    }
+
+    async updateServiceConfig(config) {
+        return this.post('/api/config/services', config);
+    }
+
+    // Upload management
+    async uploadFile(file) {
+        const formData = new FormData();
+        formData.append('videoFile', file);
+        return this.post('/api/upload', formData);
+    }
+
+    async deleteUpload() {
+        return this.delete('/api/upload');
+    }
+
+    // Transcription management
+    async startTranscription(file, service = 'whisper-cpp') {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('service', service);
+        return this.post('/api/transcription/start', formData);
+    }
+
+    async getCurrentTranscription() {
+        return this.get('/api/transcription/current');
+    }
+
+    async clearTranscription() {
+        return this.delete('/api/transcription/clear');
+    }
+
+    // Method to handle streaming responses (for video downloads)
+    async streamResponse(endpoint, onProgress = null) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            headers: this.defaultHeaders
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        if (onProgress && response.body) {
+            const reader = response.body.getReader();
+            const contentLength = +response.headers.get('Content-Length');
+            let receivedLength = 0;
+            const chunks = [];
+
+            while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) break;
+                
+                chunks.push(value);
+                receivedLength += value.length;
+                
+                if (contentLength) {
+                    onProgress(receivedLength / contentLength);
+                }
             }
 
-        } catch (error) {
-            // Re-throw or handle network errors or previously thrown HTTP errors
-            console.error(`ApiClient request failed: ${method} ${endpoint}`, error);
-            throw error; // Propagate the error to the caller
+            const blob = new Blob(chunks);
+            return {
+                success: true,
+                blob: blob,
+                contentType: response.headers.get('Content-Type')
+            };
         }
-    }
 
-    /**
-     * Performs a GET request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object} [queryParams=null] - Object to be converted to query string.
-     * @param {object} [headers={}] - Custom headers.
-     * @returns {Promise<object>}
-     */
-    async get(endpoint, queryParams = null, headers = {}) {
-        let urlWithParams = endpoint;
-        if (queryParams) {
-            const params = new URLSearchParams(queryParams);
-            urlWithParams += `?${params.toString()}`;
-        }
-        return this.request(urlWithParams, 'GET', null, headers);
-    }
-
-    /**
-     * Performs a POST request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object|FormData} body - The request body.
-     * @param {object} [headers={}] - Custom headers.
-     * @returns {Promise<object>}
-     */
-    async post(endpoint, body, headers = {}) {
-        return this.request(endpoint, 'POST', body, headers);
-    }
-
-    /**
-     * Performs a PUT request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object|FormData} body - The request body.
-     * @param {object} [headers={}] - Custom headers.
-     * @returns {Promise<object>}
-     */
-    async put(endpoint, body, headers = {}) {
-        return this.request(endpoint, 'PUT', body, headers);
-    }
-
-    /**
-     * Performs a DELETE request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object} [body=null] - Optional request body.
-     * @param {object} [headers={}] - Custom headers.
-     * @returns {Promise<object>}
-     */
-    async delete(endpoint, body = null, headers = {}) {
-        return this.request(endpoint, 'DELETE', body, headers);
-    }
-
-    /**
-     * Performs a PATCH request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object|FormData} body - The request body.
-     * @param {object} [headers={}] - Custom headers.
-     * @returns {Promise<object>}
-     */
-    async patch(endpoint, body, headers = {}) {
-        return this.request(endpoint, 'PATCH', body, headers);
+        return this.handleResponse(response);
     }
 }

@@ -1,158 +1,290 @@
-/**
- * FileUpload
- * Handles client-side logic for file uploads, including progress and status updates.
- */
+// modules/file-upload.js
+// Gère l'upload de fichiers avec drag & drop, validation et affichage des informations
+
 export class FileUpload {
-    constructor(apiClient, formSelector, fileInputSelector, progressSelector, statusSelector) {
+    constructor(apiClient) {
         this.apiClient = apiClient;
-        this.formElement = document.querySelector(formSelector);
-        this.fileInputElement = document.querySelector(fileInputSelector);
-        this.progressElement = document.querySelector(progressSelector); // Could be a <progress> bar or a div
-        this.statusElement = document.querySelector(statusSelector);
-
-        if (!this.formElement) {
-            console.warn(`FileUpload: Form element with selector "${formSelector}" not found.`);
-        }
-        if (!this.fileInputElement) {
-            console.warn(`FileUpload: File input element with selector "${fileInputSelector}" not found.`);
-        }
-        // Progress and status elements are optional for basic functionality
+        this.selectedFile = null;
+        this.uploadId = null;
+        
+        // DOM elements
+        this.dropZone = null;
+        this.fileInput = null;
+        this.fileInfo = null;
+        this.uploadSection = null;
+        this.actionButtons = null;
+        this.processingSection = null;
     }
 
-    initialize() {
-        if (!this.formElement || !this.fileInputElement) {
-            console.error("FileUpload: Cannot initialize without form and file input elements.");
+    async init() {
+        console.log('📁 FileUpload - Initializing...');
+        
+        // Get DOM elements
+        this.dropZone = document.getElementById('file-drop-zone');
+        this.fileInput = document.getElementById('video-input');
+        this.fileInfo = document.getElementById('file-info');
+        this.uploadSection = document.getElementById('upload-section');
+        this.actionButtons = document.getElementById('action-buttons');
+        this.processingSection = document.getElementById('processing-section');
+
+        if (!this.dropZone || !this.fileInput) {
+            console.warn('FileUpload - Required DOM elements not found');
             return;
         }
 
-        this.formElement.addEventListener('submit', this._handleFormSubmit.bind(this));
-        this.fileInputElement.addEventListener('change', this._handleFileSelection.bind(this));
-
-        this._setInitialStatus();
-        console.log("FileUpload initialized.");
+        this.setupEventListeners();
+        console.log('✅ FileUpload - Ready');
     }
 
-    _setInitialStatus() {
-        if (this.statusElement) {
-            this.statusElement.textContent = 'Please select a video file to upload.';
-            this.statusElement.className = 'status-info'; // Use classes for styling
-        }
-        if (this.progressElement) {
-            if (this.progressElement.tagName === 'PROGRESS') {
-                this.progressElement.value = 0;
-                this.progressElement.max = 100;
-            } else { // Assuming it's a div for custom progress bar
-                this.progressElement.style.width = '0%';
-            }
-            this.progressElement.classList.add('hidden'); // Hide until upload starts
-        }
-    }
+    setupEventListeners() {
+        // Click to upload
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
 
-    _handleFileSelection(event) {
-        if (this.statusElement) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                this.statusElement.textContent = `Selected file: ${files[0].name}`;
-                this.statusElement.className = 'status-info';
-            } else {
-                this.statusElement.textContent = 'No file selected.';
-                 this.statusElement.className = 'status-info';
-            }
+        // Drag and drop events
+        this.dropZone.addEventListener('dragover', (e) => this.handleDragOver(e));
+        this.dropZone.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        this.dropZone.addEventListener('drop', (e) => this.handleDrop(e));
+
+        // File input change
+        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+
+        // Clear file functionality
+        const clearButton = document.querySelector('#file-info button[onclick*="clearFile"]');
+        if (clearButton) {
+            clearButton.onclick = () => this.clearFile();
         }
     }
 
-    async _handleFormSubmit(event) {
+    handleDragOver(event) {
         event.preventDefault();
+        event.currentTarget.classList.add('drag-over');
+    }
 
-        const file = this.fileInputElement.files[0];
+    handleDragLeave(event) {
+        event.preventDefault();
+        event.currentTarget.classList.remove('drag-over');
+    }
 
-        if (!file) {
-            this._updateStatus('No file selected. Please choose a file to upload.', 'error');
-            return;
+    handleDrop(event) {
+        event.preventDefault();
+        event.currentTarget.classList.remove('drag-over');
+
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            this.handleFile(files[0]);
+        }
+    }
+
+    handleFileSelect(event) {
+        const files = event.target.files;
+        if (files.length > 0) {
+            this.handleFile(files[0]);
+        }
+    }
+
+    async handleFile(file) {
+        try {
+            console.log('📁 FileUpload - Processing file:', file.name);
+            
+            // Validate file
+            this.validateFile(file);
+
+            this.selectedFile = file;
+            this.showFileInfo(file);
+            this.showActionButtons();
+
+            // Upload file to server
+            await this.uploadFile(file);
+
+        } catch (error) {
+            console.error('📁 FileUpload - Error:', error);
+            window.app.showNotification('error', 'Invalid File', error.message);
+            this.clearFile();
+        }
+    }
+
+    validateFile(file) {
+        const allowedTypes = [
+            'video/mp4',
+            'video/mov',
+            'video/avi',
+            'video/mkv',
+            'video/webm'
+        ];
+        const maxSize = 500 * 1024 * 1024; // 500MB
+
+        if (!allowedTypes.includes(file.type)) {
+            throw new Error('Unsupported file type. Please upload MP4, MOV, AVI, MKV, or WebM files.');
         }
 
-        this._updateStatus(`Uploading ${file.name}...`, 'info');
-        if (this.progressElement) this.progressElement.classList.remove('hidden');
-        // For actual progress, XMLHttpRequest would be needed.
-        // With fetch, we can only show "in progress" and then success/failure.
-        // Simulating a bit of progress visually for demo:
-        this._updateProgress(10); // Initial small progress
+        if (file.size > maxSize) {
+            throw new Error(`File too large. Maximum size is ${this.formatFileSize(maxSize)}.`);
+        }
 
-        const formData = new FormData();
-        formData.append('videoFile', file); // 'videoFile' should match UploadController expected field
+        return true;
+    }
 
+    async uploadFile(file) {
         try {
-            this._updateProgress(50); // Simulate mid-progress
-            const response = await this.apiClient.post('/upload', formData); // ApiClient handles FormData
-            this._updateProgress(100);
+            console.log('📁 FileUpload - Uploading file to server...');
+            
+            const formData = new FormData();
+            formData.append('videoFile', file);
 
-            if (response && response.success) {
-                this._updateStatus(`Successfully uploaded: ${response.data?.uploadedFile?.original_name || file.name}`, 'success');
-                console.log('Upload successful:', response);
-                // Dispatch a custom event for other components to listen to
+            const response = await this.apiClient.post('/api/upload', formData);
+
+            if (response.success) {
+                this.uploadId = response.data.uploadId;
+                console.log('✅ FileUpload - File uploaded with ID:', this.uploadId);
+                
+                // Dispatch event for other modules
                 document.dispatchEvent(new CustomEvent('fileUploaded', {
                     detail: {
-                        fileName: response.data?.uploadedFile?.name,
-                        originalName: response.data?.uploadedFile?.original_name,
-                        // sessionIdentifier: response.data?.uploadedFile?.identifier, // If available
-                        backendResponse: response
+                        file: file,
+                        uploadId: this.uploadId,
+                        serverPath: response.data.filePath
                     }
                 }));
-                 // Optionally, reset the form or file input
-                // this.formElement.reset(); // Resets all form fields
-                // this.fileInputElement.value = ''; // Clears file input specifically
-                setTimeout(() => { // Hide progress bar after a short delay
-                    if (this.progressElement) this.progressElement.classList.add('hidden');
-                }, 2000);
 
+                window.app.showNotification('success', 'File Uploaded', 'Video file has been uploaded successfully');
             } else {
-                // The ApiClient should throw an error for non-ok responses,
-                // which will be caught by the catch block.
-                // This part handles cases where response.ok is true but server indicates logical failure.
-                const errorMessage = response?.error?.message || response?.message || 'Upload failed due to an unexpected server response.';
-                this._updateStatus(`Upload failed: ${errorMessage}`, 'error');
-                console.error('Upload failed with success false:', response);
-                this._updateProgress(0, 'error'); // Reset progress or show error state in progress bar
+                throw new Error(response.error || 'Upload failed');
             }
+
         } catch (error) {
-            let errorMessage = 'Upload failed.';
-            if (error.data && error.data.error && error.data.error.message) {
-                errorMessage = error.data.error.message;
-                if (error.data.error.details && error.data.error.details.details && Array.isArray(error.data.error.details.details)) {
-                    errorMessage += ` Details: ${error.data.error.details.details.join(', ')}`;
-                } else if (error.data.error.details && typeof error.data.error.details === 'string') {
-                     errorMessage += ` Details: ${error.data.error.details}`;
-                }
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            this._updateStatus(`Error: ${errorMessage}`, 'error');
-            console.error('Upload error:', error);
-            this._updateProgress(0, 'error');
+            console.error('📁 FileUpload - Upload failed:', error);
+            throw new Error(`Upload failed: ${error.message}`);
         }
     }
 
-    _updateStatus(message, type = 'info') { // type can be 'info', 'success', 'error'
-        if (this.statusElement) {
-            this.statusElement.textContent = message;
-            this.statusElement.className = `status-${type}`; // e.g., status-info, status-success, status-error
+    showFileInfo(file) {
+        if (!this.fileInfo) return;
+
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const fileDuration = document.getElementById('file-duration');
+
+        if (fileName) fileName.textContent = file.name;
+        if (fileSize) fileSize.textContent = this.formatFileSize(file.size);
+        if (fileDuration) fileDuration.textContent = 'Analyzing...';
+
+        this.fileInfo.classList.remove('hidden');
+
+        // Get video duration
+        this.getVideoDuration(file).then(duration => {
+            if (fileDuration) {
+                fileDuration.textContent = this.formatDuration(duration);
+            }
+        }).catch(() => {
+            if (fileDuration) {
+                fileDuration.textContent = 'Unknown duration';
+            }
+        });
+    }
+
+    showActionButtons() {
+        if (this.actionButtons) {
+            this.actionButtons.classList.remove('hidden');
         }
     }
 
-    _updateProgress(percentage, state = 'uploading') { // state: 'uploading', 'success', 'error'
-        if (this.progressElement) {
-            if (this.progressElement.tagName === 'PROGRESS') {
-                this.progressElement.value = percentage;
-            } else { // Assuming it's a div for custom progress bar
-                this.progressElement.style.width = `${percentage}%`;
-            }
-            // You can add classes based on state for styling
-            this.progressElement.classList.remove('progress-success', 'progress-error');
-            if (state === 'success') {
-                this.progressElement.classList.add('progress-success');
-            } else if (state === 'error') {
-                 this.progressElement.classList.add('progress-error');
-            }
+    clearFile() {
+        console.log('📁 FileUpload - Clearing file');
+        
+        this.selectedFile = null;
+        this.uploadId = null;
+        
+        if (this.fileInput) this.fileInput.value = '';
+        if (this.fileInfo) this.fileInfo.classList.add('hidden');
+        if (this.actionButtons) this.actionButtons.classList.add('hidden');
+        if (this.processingSection) this.processingSection.classList.add('hidden');
+        if (this.uploadSection) this.uploadSection.classList.remove('hidden');
+
+        // Hide transcription and rendering sections
+        const transcriptionSection = document.getElementById('transcription-section');
+        const renderingSection = document.getElementById('caption-rendering-section');
+        
+        if (transcriptionSection) transcriptionSection.classList.add('hidden');
+        if (renderingSection) renderingSection.classList.add('hidden');
+
+        // Delete uploaded file from server
+        if (this.uploadId) {
+            this.deleteUploadedFile();
         }
+
+        // Dispatch event
+        document.dispatchEvent(new CustomEvent('fileCleared'));
+    }
+
+    async deleteUploadedFile() {
+        try {
+            await this.apiClient.delete('/api/upload');
+            console.log('🗑️ FileUpload - Uploaded file deleted from server');
+        } catch (error) {
+            console.error('🗑️ FileUpload - Failed to delete uploaded file:', error);
+        }
+    }
+
+    getVideoDuration(file) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+
+            video.onloadedmetadata = function() {
+                window.URL.revokeObjectURL(video.src);
+                resolve(video.duration);
+            };
+
+            video.onerror = function() {
+                reject(new Error('Could not load video'));
+            };
+
+            video.src = URL.createObjectURL(file);
+        });
+    }
+
+    showProcessing(message = 'Processing your video...') {
+        if (this.uploadSection) this.uploadSection.classList.add('hidden');
+        if (this.actionButtons) this.actionButtons.classList.add('hidden');
+        if (this.processingSection) {
+            this.processingSection.classList.remove('hidden');
+            const messageElement = document.getElementById('processing-message');
+            if (messageElement) messageElement.textContent = message;
+        }
+    }
+
+    hideProcessing() {
+        if (this.processingSection) this.processingSection.classList.add('hidden');
+        if (this.uploadSection) this.uploadSection.classList.remove('hidden');
+    }
+
+    // Utility functions
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        } else {
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+    }
+
+    // Getters for other modules
+    getCurrentFile() {
+        return this.selectedFile;
+    }
+
+    getUploadId() {
+        return this.uploadId;
     }
 }
