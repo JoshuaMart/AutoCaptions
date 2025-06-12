@@ -53,7 +53,7 @@ TypeScript REST API for generating video captions using FFmpeg and ASS subtitles
 
 ## 📋 Examples
 
-The `examples/` directory contains a test script to help you get started:
+The `examples/` directory contains test scripts to help you get started:
 ```
 cd examples
 bash test-api.sh
