@@ -1,72 +1,63 @@
 <?php
-/**
- * Services Configuration
- * URLs and settings for AutoCaptions microservices
- */
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+declare(strict_types=1);
 
-// Default service URLs
-$defaultServices = [
-    "transcriptions" => [
-        "name" => "Transcriptions",
-        "url" => "http://transcriptions:3001",
-        "health_endpoint" => "/api/health",
-        "description" => "Audio/video transcription service",
+// Configuration for backend microservices
+//
+// The ServiceManager will use these settings to communicate with the respective services.
+// URLs should be the base URLs of the services.
+//
+// In a Docker environment, these might be service names like 'http://transcriptions:3001'.
+// For local development, they would typically be 'http://localhost:PORT'.
+
+return [
+    'timeout' => 10, // Default timeout in seconds for API requests to services
+
+    'transcriptions' => [
+        'url' => getenv('TRANSCRIPTIONS_SERVICE_URL') ?: 'http://localhost:3001',
+        // 'url' => 'http://transcriptions:3001', // Example for Docker
+        'api_prefix' => '/api',
+        'health_endpoint' => '/api/health', // Or just '/health' depending on the service
+        'endpoints' => [
+            'transcribe' => '/transcribe',
+            'services' => '/services',
+        ],
+        'timeout' => 300, // Specific timeout for transcription service (can be long)
     ],
-    "ffmpeg_captions" => [
-        "name" => "FFmpeg Captions",
-        "url" => "http://ffmpeg-captions:3002",
-        "health_endpoint" => "/api/captions/health",
-        "description" => "Fast subtitle generation with FFmpeg",
+
+    'ffmpeg-captions' => [
+        'url' => getenv('FFMPEG_CAPTIONS_SERVICE_URL') ?: 'http://localhost:3002',
+        // 'url' => 'http://ffmpeg-captions:3002', // Example for Docker
+        'api_prefix' => '/api/captions',
+        'health_endpoint' => '/api/captions/health',
+        'endpoints' => [
+            'generate' => '/generate',
+            'preview' => '/preview',
+            'presets' => '/presets',
+            'preset_detail' => '/presets/:preset',
+            'fonts' => '/fonts',
+            'font_variants' => '/fonts/:family/variants',
+        ],
+        'timeout' => 180, // Specific timeout
     ],
-    "remotion_captions" => [
-        "name" => "Remotion Captions",
-        "url" => "http://remotion-captions:3003",
-        "health_endpoint" => "/health",
-        "description" => "Advanced video captions with Remotion",
+
+    'remotion-captions' => [
+        'url' => getenv('REMOTION_CAPTIONS_SERVICE_URL') ?: 'http://localhost:3003',
+        // 'url' => 'http://remotion-captions:3003', // Example for Docker
+        'api_prefix' => '', // Assuming API endpoints are at root or have specific paths
+        'health_endpoint' => '/health',
+        'endpoints' => [
+            'render' => '/render',
+            'download' => '/download', // :uploadId will be appended
+        ],
+        'timeout' => 300, // Remotion rendering can also take time
     ],
+
+    // You can add more services here as needed
+    // 'another_service' => [
+    // 'url' => 'http://localhost:3004',
+    // 'api_prefix' => '/api/v1',
+    // 'health_endpoint' => '/status',
+    // 'timeout' => 15,
+    // ],
 ];
-
-// Get services configuration from session or use defaults
-function getServicesConfig()
-{
-    global $defaultServices;
-
-    if (isset($_SESSION["services_config"])) {
-        return $_SESSION["services_config"];
-    }
-
-    return $defaultServices;
-}
-
-// Update services configuration
-function updateServicesConfig($services)
-{
-    $_SESSION["services_config"] = $services;
-    return true;
-}
-
-// Get specific service URL
-function getServiceUrl($serviceName)
-{
-    $services = getServicesConfig();
-    return $services[$serviceName]["url"] ?? null;
-}
-
-// Validate service URL format
-function isValidServiceUrl($url)
-{
-    return filter_var($url, FILTER_VALIDATE_URL) !== false;
-}
-
-// Reset to default configuration
-function resetServicesConfig()
-{
-    global $defaultServices;
-    $_SESSION["services_config"] = $defaultServices;
-    return true;
-}

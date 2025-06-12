@@ -43,7 +43,7 @@ Auto Captions
 
 ## Demo
 
-<video src="https://github.com/user-attachments/assets/91247f4d-5a5b-462a-9589-7a46a7c94118" controls></video>
+<video src="https://github.com/user-attachments/assets/12accc18-b928-4c6a-8c07-7a4dce0f06ca" controls></video>
 
 ## 🚀 Quick Start
 

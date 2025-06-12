@@ -1,7 +1,7 @@
 FROM node:lts-alpine3.22
 
 # Install FFmpeg
-RUN apk add --no-cache ffmpeg \
+RUN apk add --no-cache ffmpeg git cmake build-base alpine-sdk g++ \
     && rm -rf /var/cache/apk/*
 
 # Set working directory
