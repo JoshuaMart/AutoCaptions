@@ -177,20 +177,6 @@ export class CaptionService {
       // Generate ASS subtitle content
       const assContent = generateASS(captions, videoPath, style);
 
-      // Debug: Save a copy of the ASS content for inspection (only in debug mode)
-      if (process.env.DEBUG_ASS === 'true' || process.env.SAVE_ASS_FILES === 'true') {
-        const debugAssPath = path.join(
-          config.upload.tempDir,
-          `debug_${presetName}_${Date.now()}.ass`,
-        );
-        try {
-          fs.writeFileSync(debugAssPath, assContent, "utf-8");
-          logger.debug(`ASS content saved for debugging: ${debugAssPath}`);
-        } catch (debugError) {
-          logger.warn("Could not save debug ASS file:", debugError);
-        }
-      }
-
       // Create ASS file
       assPath = await ffmpegService.createAssFile(assContent);
 
@@ -368,27 +354,6 @@ export class CaptionService {
           `No captions visible at timestamp ${timestamp}s. Available caption range: ` +
           `${captions[0].startMs}ms - ${captions[captions.length - 1].endMs || captions[captions.length - 1].startMs + 500}ms`,
         );
-        // Only log detailed caption times in debug mode
-        if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
-          captions.forEach((caption, idx) => {
-            const endTime = caption.endMs || caption.startMs + 0.5;
-            logger.debug(
-              `  Caption ${idx}: "${caption.text}" (${caption.startMs}ms - ${endTime}ms)`,
-            );
-          });
-        }
-      } else {
-        logger.info(
-          `Found ${visibleCaptions.length} visible caption(s) at ${timestamp}s`,
-        );
-        // Only log detailed visible captions in debug mode
-        if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
-          visibleCaptions.forEach((caption) => {
-            logger.debug(
-              `  Visible: "${caption.text}" (${caption.startMs}ms - ${caption.endMs || caption.startMs + 0.5}ms)`,
-            );
-          });
-        }
       }
 
       // Generate ASS subtitle content

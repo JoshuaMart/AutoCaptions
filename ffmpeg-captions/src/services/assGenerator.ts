@@ -259,7 +259,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     // Create word groups
     const wordGroups = createWordGroups(captions);
-    logger.info(`Created ${wordGroups.length} word groups from ${captions.length} captions`);
 
     // Generate all dialogue entries
     const allDialogues: DialogueEntry[] = [];
@@ -280,15 +279,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       );
       
       allDialogues.push(...groupDialogues);
-      
-      // Log group info in debug mode
-      if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
-        logger.debug(
-          `Group ${groupIdx}: ${group.length} words, ` +
-          `${groupDialogues.length} dialogues, ` +
-          `words: ${group.map(w => w.text).join(" ")}`
-        );
-      }
     }
     
     // Sort dialogues by start time to ensure proper order
@@ -300,10 +290,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       const curr = allDialogues[i];
       
       if (prev.endMs > curr.startMs) {
-        logger.debug(
-          `Fixing overlap: Dialogue ${i-1} ends at ${prev.endMs}ms ` +
-          `but Dialogue ${i} starts at ${curr.startMs}ms`
-        );
         prev.endMs = curr.startMs - 10;
       }
     }
@@ -316,18 +302,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       
       ass += `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${dialogue.text}\n`;
       dialogueCount++;
-      
-      // Log first few dialogues in debug mode
-      if (dialogueCount <= 3 && (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true')) {
-        logger.debug(
-          `Dialogue ${dialogueCount}: [${dialogue.startMs}-${dialogue.endMs}ms] ` +
-          `Duration: ${dialogue.endMs - dialogue.startMs}ms`
-        );
-      }
     }
-    
-    logger.info(`Generated ${dialogueCount} dialogue entries from ${wordGroups.length} groups`);
-    logger.info(`Generated ASS file with ${captions.length} captions`);
     
     return ass;
   } catch (error) {
