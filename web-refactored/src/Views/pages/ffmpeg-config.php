@@ -2,7 +2,8 @@
 // Views/pages/ffmpeg-config.php
 
 $pageTitle = $pageTitle ?? "FFmpeg Configuration - AutoCaptions";
-$pageDescription = $pageDescription ?? "Customize your caption style and preview the result";
+$pageDescription =
+    $pageDescription ?? "Customize your caption style and preview the result";
 ?>
 
 <div class="text-center mb-10">
@@ -127,7 +128,7 @@ $pageDescription = $pageDescription ?? "Customize your caption style and preview
                 <button type="button"
                         onclick="generatePreview()"
                         id="preview-btn"
-                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled>
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z"/>
@@ -215,7 +216,7 @@ $pageDescription = $pageDescription ?? "Customize your caption style and preview
     .color-input {
         width: 60px;
         height: 40px;
-        padding: 0;
+        padding: 3px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
