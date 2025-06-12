@@ -434,7 +434,7 @@ class FFmpegConfig {
               id="${option.key}-color"
               value="#${defaultValue}"
               class="color-input-modern"
-              onchange="ffmpegConfig.syncColorField('${option.key}')">
+              onchange="ffmpegConfig.syncHexField('${option.key}')">
           <input type="text"
               name="${option.key}"
               id="${option.key}"
@@ -442,7 +442,7 @@ class FFmpegConfig {
               placeholder="FFFFFF"
               class="hex-input-modern px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               maxlength="6"
-              oninput="ffmpegConfig.syncHexField('${option.key}')">
+              oninput="ffmpegConfig.syncColorField('${option.key}')">
         </div>
       </div>
     `;
@@ -511,24 +511,24 @@ class FFmpegConfig {
   applyPresetDefaults(defaults) {
     for (const [key, value] of Object.entries(defaults)) {
       const element = document.getElementById(key);
+      const colorElement = document.getElementById(`${key}-color`);
+      
       if (element) {
         if (element.type === "checkbox") {
           element.checked = !!value;
-        } else if (element.type === "color") {
-          element.value = `#${value}`;
+        } else if (element.type === "range") {
+          element.value = value;
+          this.updateRangeValue(key);
         } else {
           element.value = value;
         }
-
-        // Update range display values
-        if (element.type === "range") {
-          this.updateRangeValue(key);
-        }
-
-        // Sync color fields
-        if (key.includes("Color")) {
-          this.syncColorField(key);
-        }
+      }
+      
+      // Handle color fields specifically
+      if (colorElement && colorElement.type === "color") {
+        const hexValue = value.toString().replace("#", "");
+        element.value = hexValue;
+        colorElement.value = `#${hexValue}`;
       }
     }
   }
@@ -539,7 +539,7 @@ class FFmpegConfig {
       this.updateRangeValue(range.id);
     });
 
-    // Initialize color inputs
+    // Initialize color inputs - sync hex to color picker
     document.querySelectorAll('input[type="color"]').forEach((colorInput) => {
       const key = colorInput.id.replace("-color", "");
       this.syncColorField(key);
@@ -637,7 +637,8 @@ class FFmpegConfig {
       if (element) {
         if (element.type === "checkbox") {
           config.customStyle[option.key] = element.checked;
-        } else if (element.type === "color") {
+        } else if (option.type === "color") {
+          // For color fields, read the hex input value (without #)
           config.customStyle[option.key] = element.value.replace("#", "");
         } else {
           config.customStyle[option.key] = element.value;

@@ -277,6 +277,43 @@ $pageDescription =
         cursor: pointer;
         border: none;
     }
+
+    /* Color input styling */
+    .color-input-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .color-input-modern {
+        width: 60px;
+        height: 40px;
+        padding: 3px;
+        border: 1px solid #D1D5DB;
+        border-radius: 6px;
+        cursor: pointer;
+        background: transparent;
+    }
+
+    .color-input-modern::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .color-input-modern::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+
+    .hex-input-modern {
+        flex: 1;
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
+    }
+
+    .hex-input-modern::placeholder {
+        text-transform: uppercase;
+        color: #9CA3AF;
+    }
 </style>
 
 <!-- JavaScript -->
