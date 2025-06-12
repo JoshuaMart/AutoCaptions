@@ -2,6 +2,9 @@ import { Caption, CaptionStyle, VideoResolution } from "../types";
 import { getVideoResolution } from "../utils/videoValidator";
 import logger from "../utils/logger";
 
+/**
+ * Convert seconds to ASS timestamp format (h:mm:ss.cs)
+ */
 function secToASS(sec: number): string {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -10,47 +13,135 @@ function secToASS(sec: number): string {
   return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}.${cs.toString().padStart(2, "0")}`;
 }
 
-function calculateEndTime(captions: Caption[], currentIndex: number): number {
-  const caption = captions[currentIndex];
-
-  // If endMs is defined and valid, use it
-  if (caption.endMs !== undefined && caption.endMs > caption.startMs) {
-    return caption.endMs;
+/**
+ * Convert hex color to BGR format for ASS
+ */
+function hexToBGR(hex: string): string {
+  if (hex.length !== 6) {
+    throw new Error(`Invalid hex color: ${hex}`);
   }
-
-  // Otherwise, use the beginning of the following word
-  if (currentIndex < captions.length - 1) {
-    return captions[currentIndex + 1].startMs;
-  }
-
-  // For the last word, add a default duration (500ms)
-  return caption.startMs + 500;
+  const r = hex.substring(0, 2);
+  const g = hex.substring(2, 4);
+  const b = hex.substring(4, 6);
+  return `${b}${g}${r}`;
 }
 
-function groupWordsByTime(
+/**
+ * Convert opacity (0-100) to ASS alpha (00-FF)
+ */
+function opacityToAlpha(opacity: number): string {
+  const alpha = Math.round((100 - opacity) * 2.55);
+  return alpha.toString(16).padStart(2, "0").toUpperCase();
+}
+
+/**
+ * Calculate margins based on style and resolution
+ */
+function calculateMargins(
+  style: CaptionStyle,
+  resolution: VideoResolution,
+): { marginL: number; marginR: number; marginV: number } {
+  const marginL = 20;
+  const marginR = 20;
+
+  let basePosition: number;
+  switch (style.position) {
+    case "top":
+      basePosition = Math.floor(resolution.height * 0.9);
+      break;
+    case "center":
+      basePosition = Math.floor(resolution.height * 0.5);
+      break;
+    case "bottom":
+    default:
+      basePosition = Math.floor(resolution.height * 0.15);
+      break;
+  }
+
+  const marginV = Math.max(0, basePosition - style.positionOffset);
+  return { marginL, marginR, marginV };
+}
+
+/**
+ * Create styled text for a word
+ */
+function createStyledWord(
+  text: string,
+  style: CaptionStyle,
+  isActive: boolean,
+  fontSize: number,
+): string {
+  const displayText = style.uppercase ? text.toUpperCase() : text;
+
+  if (isActive) {
+    const activeColorBGR = hexToBGR(style.activeWordColor);
+    const activeOutlineBGR = hexToBGR(style.activeWordOutlineColor);
+    const scaleFactor = fontSize / style.fontSize;
+    const activeWordSize = Math.round(style.activeWordFontSize * scaleFactor);
+
+    let tags = `\\fs${activeWordSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
+    tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
+
+    if (style.activeWordShadowOpacity > 0) {
+      const shadowColorBGR = hexToBGR(style.activeWordShadowColor);
+      const shadowAlpha = opacityToAlpha(style.activeWordShadowOpacity);
+      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad4`;
+    } else {
+      tags += `\\shad0`;
+    }
+
+    return `{${tags}}${displayText}{\\r}`;
+  } else {
+    const textColorBGR = hexToBGR(style.textColor);
+    const outlineColorBGR = hexToBGR(style.outlineColor);
+
+    let tags = `\\fs${fontSize}\\b${style.fontWeight}\\1c&H${textColorBGR}&`;
+    tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}`;
+
+    if (style.shadowOpacity > 0) {
+      const shadowColorBGR = hexToBGR(style.shadowColor);
+      const shadowAlpha = opacityToAlpha(style.shadowOpacity);
+      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad2`;
+    } else {
+      tags += `\\shad0`;
+    }
+
+    return `{${tags}}${displayText}{\\r}`;
+  }
+}
+
+/**
+ * Group words into display units
+ */
+function createWordGroups(
   captions: Caption[],
-  minMs: number = 1200,
+  maxGroupDuration: number = 2500,
+  maxWordsPerGroup: number = 5,
 ): Caption[][] {
   const groups: Caption[][] = [];
   let currentGroup: Caption[] = [];
-  let groupStart: number | null = null;
+  let groupStartTime = 0;
 
   for (let i = 0; i < captions.length; i++) {
     const caption = captions[i];
-    const endTime = calculateEndTime(captions, i);
-
+    
     if (currentGroup.length === 0) {
-      groupStart = caption.startMs;
-      currentGroup.push({ ...caption, endMs: endTime });
+      currentGroup.push(caption);
+      groupStartTime = caption.startMs;
     } else {
-      const groupDuration = endTime - groupStart!;
-
-      if (groupDuration >= minMs) {
+      const groupDuration = (caption.endMs || caption.startMs + 300) - groupStartTime;
+      const timeSinceLast = caption.startMs - (captions[i - 1].endMs || captions[i - 1].startMs + 300);
+      
+      if (
+        currentGroup.length >= maxWordsPerGroup ||
+        groupDuration >= maxGroupDuration ||
+        timeSinceLast > 600
+      ) {
         groups.push([...currentGroup]);
-        currentGroup = [{ ...caption, endMs: endTime }];
-        groupStart = caption.startMs;
+        currentGroup = [caption];
+        groupStartTime = caption.startMs;
       } else {
-        currentGroup.push({ ...caption, endMs: endTime });
+        currentGroup.push(caption);
       }
     }
   }
@@ -62,151 +153,97 @@ function groupWordsByTime(
   return groups;
 }
 
-function getAlignment(position: string): number {
-  // We always use bottom-center alignment (2) for greater control
-  // and calculate position via marginV
-  return 2;
+/**
+ * Generate dialogue entries for a word group
+ */
+interface DialogueEntry {
+  startMs: number;
+  endMs: number;
+  text: string;
 }
 
-function hexToBGR(hex: string): string {
-  // Converts hex color (RGB) to BGR format for ASS
-  if (hex.length !== 6) {
-    throw new Error(`Invalid hex color: ${hex}`);
-  }
-  const r = hex.substring(0, 2);
-  const g = hex.substring(2, 4);
-  const b = hex.substring(4, 6);
-  return `${b}${g}${r}`;
-}
-
-function opacityToAlpha(opacity: number): string {
-  // Convert opacity (0-100) to ASS alpha (00-FF)
-  // 100% opacity = 00 (opaque), 0% opacity = FF (transparent)
-  const alpha = Math.round((100 - opacity) * 2.55);
-  return alpha.toString(16).padStart(2, "0").toUpperCase();
-}
-
-function calculateMargins(
+function generateGroupDialogues(
+  group: Caption[],
+  groupIndex: number,
+  totalGroups: number,
+  nextGroupStartMs: number | null,
   style: CaptionStyle,
-  resolution: VideoResolution,
-): { marginL: number; marginR: number; marginV: number } {
-  const marginL = 20; // Fixed horizontal margins
-  const marginR = 20;
-
-  // Vertical position calculation based on position + offset
-  // Always use bottom alignment (2), so marginV = distance from bottom
-  let basePosition: number;
-
-  switch (style.position) {
-    case "top":
-      // Top position: 10% from top = 90% from bottom
-      basePosition = Math.floor(resolution.height * 0.9);
-      break;
-    case "center":
-      // Center position: 50% from bottom
-      basePosition = Math.floor(resolution.height * 0.5);
-      break;
-    case "bottom":
-    default:
-      // Bottom position: 15% from bottom
-      basePosition = Math.floor(resolution.height * 0.15);
-      break;
+  fontSize: number,
+): DialogueEntry[] {
+  const dialogues: DialogueEntry[] = [];
+  
+  // For each word in the group, create a dialogue entry
+  for (let wordIndex = 0; wordIndex < group.length; wordIndex++) {
+    const currentWord = group[wordIndex];
+    const startMs = currentWord.startMs;
+    
+    // Calculate end time
+    let endMs: number;
+    if (wordIndex < group.length - 1) {
+      // Not the last word in group: end when next word starts
+      endMs = group[wordIndex + 1].startMs;
+    } else {
+      // Last word in group
+      if (nextGroupStartMs !== null) {
+        // There's a next group: end just before it starts
+        endMs = Math.min(
+          currentWord.endMs || currentWord.startMs + 400,
+          nextGroupStartMs - 20
+        );
+      } else {
+        // Last word of last group
+        endMs = currentWord.endMs || currentWord.startMs + 400;
+      }
+    }
+    
+    // Build dialogue text with all words in group
+    const dialogueText = group
+      .map((word, idx) => createStyledWord(word.text, style, idx === wordIndex, fontSize))
+      .join(" ");
+    
+    dialogues.push({
+      startMs,
+      endMs,
+      text: dialogueText,
+    });
   }
-
-  // Apply offset: positive = lower (less margin), negative = higher (more margin)
-  const marginV = Math.max(0, basePosition - style.positionOffset);
-
-  return { marginL, marginR, marginV };
+  
+  return dialogues;
 }
 
-function createWordTag(
-  word: Caption,
-  style: CaptionStyle,
-  isActive: boolean,
-  adjustedFontSize: number,
-): string {
-  const text = style.uppercase ? word.text.toUpperCase() : word.text;
-
-  if (isActive) {
-    // Active word styling
-    const activeColorBGR = hexToBGR(style.activeWordColor);
-    const activeOutlineBGR = hexToBGR(style.activeWordOutlineColor);
-
-    // Use active word font size (also scale it to resolution)
-    const scaleFactor = adjustedFontSize / style.fontSize;
-    const activeWordSize = Math.round(style.activeWordFontSize * scaleFactor);
-
-    let tags = `\\fs${activeWordSize}\\b${style.fontWeight}\\1c&H${activeColorBGR}&`;
-    tags += `\\3c&H${activeOutlineBGR}&\\bord${style.activeWordOutlineWidth}`;
-
-    // Add active word shadow if specified
-    if (style.activeWordShadowOpacity > 0) {
-      const shadowColorBGR = hexToBGR(style.activeWordShadowColor);
-      const shadowAlpha = opacityToAlpha(style.activeWordShadowOpacity);
-
-      // Create shadow using \\4c (shadow/background color) and \\shad (shadow distance)
-      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad4`;
-    } else {
-      tags += `\\shad0`;
-    }
-
-    return `{${tags}}${text}{\\r}`;
-  } else {
-    // Normal word styling
-    const textColorBGR = hexToBGR(style.textColor);
-    const outlineColorBGR = hexToBGR(style.outlineColor);
-
-    let tags = `\\fs${adjustedFontSize}\\b${style.fontWeight}\\1c&H${textColorBGR}&`;
-    tags += `\\3c&H${outlineColorBGR}&\\bord${style.outlineWidth}`;
-
-    // Add normal text shadow if specified
-    if (style.shadowOpacity > 0) {
-      const shadowColorBGR = hexToBGR(style.shadowColor);
-      const shadowAlpha = opacityToAlpha(style.shadowOpacity);
-
-      tags += `\\4c&H${shadowAlpha}${shadowColorBGR}&\\shad2`;
-    } else {
-      tags += `\\shad0`;
-    }
-
-    return `{${tags}}${text}{\\r}`;
-  }
-}
-
+/**
+ * Main ASS generation function
+ */
 export function generateASS(
   captions: Caption[],
   videoPath: string,
   style: CaptionStyle,
 ): string {
   try {
+    if (!captions || captions.length === 0) {
+      throw new Error("No captions provided");
+    }
+
     const resolution = getVideoResolution(videoPath);
-    const alignment = getAlignment(style.position);
     const margins = calculateMargins(style, resolution);
 
-    // Adapt font size to resolution
+    // Calculate font size based on resolution
     const scaleFactor = Math.min(
       resolution.width / 1080,
       resolution.height / 1920,
     );
     const adjustedFontSize = Math.round(style.fontSize * scaleFactor);
 
-    // Determine if we need line background
-    const hasLineBackground = style.backgroundOpacity > 0;
-
-    // Colors in BGR format
+    // Prepare style values
     const textColorBGR = hexToBGR(style.textColor);
     const outlineColorBGR = hexToBGR(style.outlineColor);
-    const backgroundColorBGR = hexToBGR(style.backgroundColor);
-    const backgroundAlpha = opacityToAlpha(style.backgroundOpacity);
-
-    // BorderStyle: 4 for box background, 1 for normal outline
+    const hasLineBackground = style.backgroundOpacity > 0;
     const borderStyle = hasLineBackground ? 4 : 1;
-
-    // For BorderStyle=4, the background is controlled by BackColour
     const backColour = hasLineBackground
-      ? `&H${backgroundAlpha}${backgroundColorBGR}&`
+      ? `&H${opacityToAlpha(style.backgroundOpacity)}${hexToBGR(style.backgroundColor)}&`
       : "&H0&";
 
+    // Generate ASS header
     let ass = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${resolution.width}
@@ -214,83 +251,84 @@ PlayResY: ${resolution.height}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${style.fontFamily},${adjustedFontSize},&H${textColorBGR}&,&H0&,&H${outlineColorBGR}&,${backColour},${style.fontWeight >= 700 ? 1 : 0},0,0,0,100,100,0,0,${borderStyle},${style.outlineWidth},0,${alignment},${margins.marginL},${margins.marginR},${margins.marginV},1
+Style: Default,${style.fontFamily},${adjustedFontSize},&H${textColorBGR}&,&H0&,&H${outlineColorBGR}&,${backColour},${style.fontWeight >= 700 ? 1 : 0},0,0,0,100,100,0,0,${borderStyle},${style.outlineWidth},0,2,${margins.marginL},${margins.marginR},${margins.marginV},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
-    const wordGroups = groupWordsByTime(captions);
+    // Create word groups
+    const wordGroups = createWordGroups(captions);
+    logger.info(`Created ${wordGroups.length} word groups from ${captions.length} captions`);
 
-    logger.info(
-      `Generated ${wordGroups.length} word groups for ASS generation`,
-    );
-
+    // Generate all dialogue entries
+    const allDialogues: DialogueEntry[] = [];
+    
     for (let groupIdx = 0; groupIdx < wordGroups.length; groupIdx++) {
       const group = wordGroups[groupIdx];
-      logger.info(
-        `Group ${groupIdx}: ${group.length} words from ${group[0].startMs}ms to ${group[group.length - 1].endMs}ms`,
+      const nextGroupStartMs = groupIdx < wordGroups.length - 1 
+        ? wordGroups[groupIdx + 1][0].startMs 
+        : null;
+      
+      const groupDialogues = generateGroupDialogues(
+        group,
+        groupIdx,
+        wordGroups.length,
+        nextGroupStartMs,
+        style,
+        adjustedFontSize
       );
-
-      // Create a timeline for this group to avoid overlaps
-      const timeline: Array<{
-        start: number;
-        end: number;
-        activeWordIndex: number;
-        line: string;
-      }> = [];
-
-      // Generate timeline entries for each word
-      for (let wordIdx = 0; wordIdx < group.length; wordIdx++) {
-        const currentWord = group[wordIdx];
-        let endTime: number;
-        
-        if (wordIdx < group.length - 1) {
-          // End when next word starts (no gap)
-          endTime = group[wordIdx + 1].startMs;
-        } else {
-          // Last word: use its calculated end time
-          endTime = currentWord.endMs;
-        }
-
-        // Create the line with current word highlighted
-        const line = group
-          .map((word, idx) =>
-            createWordTag(
-              word,
-              style,
-              idx === wordIdx,
-              adjustedFontSize,
-            ),
-          )
-          .join(" ");
-
-        timeline.push({
-          start: currentWord.startMs,
-          end: endTime,
-          activeWordIndex: wordIdx,
-          line: line,
-        });
-      }
-
-      // Convert timeline to ASS dialogues
-      for (const entry of timeline) {
-        const start = secToASS(entry.start / 1000);
-        const end = secToASS(entry.end / 1000);
-        
-        const dialogue = `Dialogue: 0,${start},${end},Default,,0,0,0,,${entry.line}`;
-        ass += dialogue + "\n";
-
-        // Log first few dialogues for debugging
-        if (groupIdx === 0 && entry.activeWordIndex < 3) {
-          logger.info(`Dialogue ${entry.activeWordIndex}: ${dialogue}`);
-        }
+      
+      allDialogues.push(...groupDialogues);
+      
+      // Log group info in debug mode
+      if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
+        logger.debug(
+          `Group ${groupIdx}: ${group.length} words, ` +
+          `${groupDialogues.length} dialogues, ` +
+          `words: ${group.map(w => w.text).join(" ")}`
+        );
       }
     }
-
-    logger.info(
-      `Generated ASS subtitle with ${captions.length} captions in ${wordGroups.length} groups`,
-    );
+    
+    // Sort dialogues by start time to ensure proper order
+    allDialogues.sort((a, b) => a.startMs - b.startMs);
+    
+    // Fix any remaining overlaps
+    for (let i = 1; i < allDialogues.length; i++) {
+      const prev = allDialogues[i - 1];
+      const curr = allDialogues[i];
+      
+      if (prev.endMs > curr.startMs) {
+        logger.debug(
+          `Fixing overlap: Dialogue ${i-1} ends at ${prev.endMs}ms ` +
+          `but Dialogue ${i} starts at ${curr.startMs}ms`
+        );
+        prev.endMs = curr.startMs - 10;
+      }
+    }
+    
+    // Convert to ASS format
+    let dialogueCount = 0;
+    for (const dialogue of allDialogues) {
+      const startTime = secToASS(dialogue.startMs / 1000);
+      const endTime = secToASS(dialogue.endMs / 1000);
+      
+      ass += `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${dialogue.text}\n`;
+      dialogueCount++;
+      
+      // Log first few dialogues in debug mode
+      if (dialogueCount <= 3 && (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true')) {
+        logger.debug(
+          `Dialogue ${dialogueCount}: [${dialogue.startMs}-${dialogue.endMs}ms] ` +
+          `Duration: ${dialogue.endMs - dialogue.startMs}ms`
+        );
+      }
+    }
+    
+    logger.info(`Generated ${dialogueCount} dialogue entries from ${wordGroups.length} groups`);
+    logger.info(`Generated ASS file with ${captions.length} captions`);
+    
     return ass;
   } catch (error) {
     logger.error("Error generating ASS subtitle:", error);

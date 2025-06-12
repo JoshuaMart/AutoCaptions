@@ -170,22 +170,25 @@ export class CaptionService {
       }
 
       logger.info(
-        `Generating captions with preset '${presetName}' for ${captions.length} words`,
+        `Generating captions: preset='${presetName}', words=${captions.length}, ` +
+        `video='${path.basename(videoPath)}'`,
       );
 
       // Generate ASS subtitle content
       const assContent = generateASS(captions, videoPath, style);
 
-      // Debug: Save a copy of the ASS content for inspection
-      const debugAssPath = path.join(
-        config.upload.tempDir,
-        `debug_preview_${Date.now()}.ass`,
-      );
-      try {
-        fs.writeFileSync(debugAssPath, assContent, "utf-8");
-        logger.info(`Debug: Preview ASS content saved to ${debugAssPath}`);
-      } catch (debugError) {
-        logger.warn("Could not save debug preview ASS file:", debugError);
+      // Debug: Save a copy of the ASS content for inspection (only in debug mode)
+      if (process.env.DEBUG_ASS === 'true' || process.env.SAVE_ASS_FILES === 'true') {
+        const debugAssPath = path.join(
+          config.upload.tempDir,
+          `debug_${presetName}_${Date.now()}.ass`,
+        );
+        try {
+          fs.writeFileSync(debugAssPath, assContent, "utf-8");
+          logger.debug(`ASS content saved for debugging: ${debugAssPath}`);
+        } catch (debugError) {
+          logger.warn("Could not save debug ASS file:", debugError);
+        }
       }
 
       // Create ASS file
@@ -196,7 +199,10 @@ export class CaptionService {
 
       const processingTime = Date.now() - startTime;
 
-      logger.info(`Caption generation completed in ${processingTime}ms`);
+      logger.info(
+        `Caption generation completed: ${processingTime}ms, ` +
+        `output='${path.basename(outputPath)}', size=${fs.statSync(outputPath).size} bytes`,
+      );
 
       return {
         success: true,
@@ -347,7 +353,8 @@ export class CaptionService {
       }
 
       logger.info(
-        `Generating preview frame with preset '${presetName}' at timestamp ${timestamp}s`,
+        `Generating preview frame: preset='${presetName}', timestamp=${timestamp}s, ` +
+        `video='${path.basename(videoPath)}'`,
       );
 
       // Check if there are any captions that should be visible at the requested timestamp
@@ -358,23 +365,30 @@ export class CaptionService {
 
       if (visibleCaptions.length === 0) {
         logger.warn(
-          `No captions visible at timestamp ${timestamp}s. Available caption times:`,
+          `No captions visible at timestamp ${timestamp}s. Available caption range: ` +
+          `${captions[0].startMs}ms - ${captions[captions.length - 1].endMs || captions[captions.length - 1].startMs + 500}ms`,
         );
-        captions.forEach((caption, idx) => {
-          const endTime = caption.endMs || caption.startMs + 0.5;
-          logger.warn(
-            `  ${idx}: "${caption.text}" (${caption.startMs}s - ${endTime}s)`,
-          );
-        });
+        // Only log detailed caption times in debug mode
+        if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
+          captions.forEach((caption, idx) => {
+            const endTime = caption.endMs || caption.startMs + 0.5;
+            logger.debug(
+              `  Caption ${idx}: "${caption.text}" (${caption.startMs}ms - ${endTime}ms)`,
+            );
+          });
+        }
       } else {
         logger.info(
-          `Found ${visibleCaptions.length} visible captions at ${timestamp}s:`,
+          `Found ${visibleCaptions.length} visible caption(s) at ${timestamp}s`,
         );
-        visibleCaptions.forEach((caption) => {
-          logger.info(
-            `  "${caption.text}" (${caption.startMs}s - ${caption.endMs || caption.startMs + 0.5}s)`,
-          );
-        });
+        // Only log detailed visible captions in debug mode
+        if (process.env.DEBUG_ASS === 'true' || process.env.LOG_CAPTION_DETAILS === 'true') {
+          visibleCaptions.forEach((caption) => {
+            logger.debug(
+              `  Visible: "${caption.text}" (${caption.startMs}ms - ${caption.endMs || caption.startMs + 0.5}ms)`,
+            );
+          });
+        }
       }
 
       // Generate ASS subtitle content
@@ -392,7 +406,10 @@ export class CaptionService {
 
       const processingTime = Date.now() - startTime;
 
-      logger.info(`Preview frame generation completed in ${processingTime}ms`);
+      logger.info(
+        `Preview frame generation completed: ${processingTime}ms, ` +
+        `output='${path.basename(imagePath)}', timestamp=${timestamp}s`,
+      );
 
       return {
         success: true,
