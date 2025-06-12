@@ -175,13 +175,6 @@ $pageDescription =
                     </div>
                 </div>
             </div>
-
-            <!-- Preview Info -->
-            <div class="mt-4 text-sm text-gray-600">
-                <p>• Preview shows a single frame with captions</p>
-                <p>• Adjust settings and regenerate to see changes</p>
-                <p>• Final video will have word-by-word highlighting</p>
-            </div>
         </div>
     </div>
 </div>

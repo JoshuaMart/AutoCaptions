@@ -402,49 +402,50 @@ class FFmpegConfig {
   }
 
   generateNumberField(option, defaults) {
-    const defaultValue = defaults[option.key] || option.min || 0;
-
+    const defaultValue = defaults[option.key] ?? option.min ?? 0;
     return `
-            <div class="field-group range-field">
-                <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
-                <div class="flex items-center space-x-3">
-                    <input type="range"
-                           name="${option.key}"
-                           id="${option.key}"
-                           min="${option.min || 0}"
-                           max="${option.max || 100}"
-                           value="${defaultValue}"
-                           class="flex-1">
-                    <span id="${option.key}-value" class="text-sm font-medium text-gray-600 w-12 text-center">${defaultValue}</span>
-                </div>
-            </div>
-        `;
+      <div class="field-group">
+        <label for="${option.key}">${option.label}</label>
+        <div class="input-row">
+          <div class="range-slider">
+            <input type="range"
+                   name="${option.key}"
+                   id="${option.key}"
+                   min="${option.min || 0}"
+                   max="${option.max || 100}"
+                   value="${defaultValue}"
+                   class=""
+                   oninput="ffmpegConfig.updateRangeValue('${option.key}')">
+          </div>
+          <span id="${option.key}-value" class="range-value-badge">${defaultValue}</span>
+        </div>
+      </div>
+    `;
   }
 
   generateColorField(option, defaults) {
     const defaultValue = defaults[option.key] || "FFFFFF";
-
     return `
-            <div class="field-group">
-                <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
-                <div class="flex items-center space-x-3">
-                    <input type="color"
-                           name="${option.key}-color"
-                           id="${option.key}-color"
-                           value="#${defaultValue}"
-                           class="color-input"
-                           onchange="ffmpegConfig.syncColorField('${option.key}')">
-                    <input type="text"
-                           name="${option.key}"
-                           id="${option.key}"
-                           value="${defaultValue}"
-                           placeholder="FFFFFF"
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           maxlength="6"
-                           oninput="ffmpegConfig.syncHexField('${option.key}')">
-                </div>
-            </div>
-        `;
+      <div class="field-group">
+        <label for="${option.key}" class="">${option.label}</label>
+        <div class="color-input-group">
+          <input type="color"
+              name="${option.key}-color"
+              id="${option.key}-color"
+              value="#${defaultValue}"
+              class="color-input-modern"
+              onchange="ffmpegConfig.syncColorField('${option.key}')">
+          <input type="text"
+              name="${option.key}"
+              id="${option.key}"
+              value="${defaultValue}"
+              placeholder="FFFFFF"
+              class="hex-input-modern px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxlength="6"
+              oninput="ffmpegConfig.syncHexField('${option.key}')">
+        </div>
+      </div>
+    `;
   }
 
   generateSelectField(option, defaults) {
