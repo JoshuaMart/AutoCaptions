@@ -34,7 +34,9 @@ return [
             'generate' => '/generate',
             'preview' => '/preview',
             'presets' => '/presets',
+            'preset_detail' => '/presets/:preset',
             'fonts' => '/fonts',
+            'font_variants' => '/fonts/:family/variants',
         ],
         'timeout' => 180, // Specific timeout
     ],

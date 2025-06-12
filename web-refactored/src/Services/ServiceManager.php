@@ -247,6 +247,48 @@ class ServiceManager
         );
     }
 
+    /**
+     * Helper method for making requests with file uploads
+     */
+    public function callWithFile(
+        string $serviceName,
+        string $endpoint,
+        string $method,
+        string $filePath,
+        string $fileFieldName = 'file',
+        array $additionalData = []
+    ): array {
+        if (!file_exists($filePath)) {
+            return [
+                'success' => false,
+                'error' => "File not found: {$filePath}",
+                'content' => null
+            ];
+        }
+
+        $files = [$fileFieldName => $filePath];
+        $result = $this->makeRequest($serviceName, $endpoint, $method, $additionalData, $files);
+
+        // For file responses (like images or videos), return the content directly
+        if ($result['success'] && isset($result['body'])) {
+            return [
+                'success' => true,
+                'content' => $result['body'],
+                'headers' => $result['headers'] ?? []
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Simple API call method for backward compatibility
+     */
+    public function call(string $serviceName, string $endpoint, string $method = 'GET', array $data = []): array
+    {
+        return $this->makeRequest($serviceName, $endpoint, $method, $data);
+    }
+
     private function executeRequest(
         string $method,
         string $url,

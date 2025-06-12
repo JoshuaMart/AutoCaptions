@@ -9,6 +9,7 @@ namespace App\Core;
 use App\Controllers\UploadController; // Import the UploadController
 use App\Controllers\TranscriptionController; // Import the TranscriptionController
 use App\Controllers\ConfigController; // Import the ConfigController
+use App\Controllers\FFmpegController; // Import the FFmpegController
 use App\Services\ConfigManager; // Import the ConfigManager
 
 class Application
@@ -145,6 +146,18 @@ class Application
                 'pageTitle' => 'Choose Service - AutoCaptions'
             ]);
         });
+        
+        // FFmpeg configuration page
+        $this->router->get('/configuration', function(Request $request, Response $response) use ($appInstance) {
+            $service = $request->query('service');
+            if ($service === 'ffmpeg') {
+                $controller = new FFmpegController();
+                $controller->showConfiguration($request, $response);
+            } else {
+                // Redirect to service choice if no valid service
+                $response->redirect('/service-choice');
+            }
+        });
 
         // API routes for UploadController
         // The plan mentioned POST /api/upload and DELETE /api/upload/{id}
@@ -166,6 +179,16 @@ class Application
         
         // Additional API route for saving transcription
         $this->router->post('/api/transcription/save', [TranscriptionController::class, 'saveTranscription']);
+
+        // API routes for FFmpegController
+        $this->router->get('/api/ffmpeg/presets', [FFmpegController::class, 'getPresets']);
+        $this->router->get('/api/ffmpeg/presets/{preset}', [FFmpegController::class, 'getPreset']);
+        $this->router->get('/api/ffmpeg/fonts', [FFmpegController::class, 'getFonts']);
+        $this->router->get('/api/ffmpeg/fonts/{family}/variants', [FFmpegController::class, 'getFontVariants']);
+        $this->router->post('/api/ffmpeg/preview', [FFmpegController::class, 'generatePreview']);
+        $this->router->post('/api/ffmpeg/generate', [FFmpegController::class, 'generateVideo']);
+        $this->router->post('/api/ffmpeg/config/save', [FFmpegController::class, 'saveConfiguration']);
+        $this->router->get('/api/ffmpeg/config/current', [FFmpegController::class, 'getCurrentConfiguration']);
 
         // To add other controllers, you would define their routes here.
 

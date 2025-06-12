@@ -129,6 +129,8 @@ class Router
         }
 
         if ($matchedRoute) {
+            // Pass route parameters to the request object
+            $request->setRouteParams($matchedRoute['params']);
             $this->callHandler($matchedRoute['handler'], $matchedRoute['params'], $request, $response);
         } elseif (!empty($allowedMethods)) {
             // Path matched, but method not allowed
@@ -171,9 +173,9 @@ class Router
             if (class_exists($controllerClass)) {
                 $controller = new $controllerClass(); // Basic instantiation. DI container would be better.
                 if (method_exists($controller, $method)) {
-                    // Prepend request and response to params for controller method, then route params
-                    $args = array_merge([$request, $response], $params);
-                    call_user_func_array([$controller, $method], $args);
+                    // Controller methods only take Request and Response objects
+                    // Route parameters are accessible via $request->getRouteParam()
+                    call_user_func_array([$controller, $method], [$request, $response]);
 
                     // Similar to callables, check if response needs sending.
                     // if (!$response->isHeadersSent() && !empty($response->getContent())) {

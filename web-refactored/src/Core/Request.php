@@ -17,6 +17,7 @@ class Request
     private string $uri;
     private string $path;
     private string $queryString;
+    private array $routeParams = [];
 
     public function __construct(
         ?array $get = null,
@@ -285,6 +286,52 @@ class Request
         $authorizationHeader = $this->header('Authorization');
         if ($authorizationHeader && preg_match('/Bearer\s+(.*)$/i', $authorizationHeader, $matches)) {
             return $matches[1];
+        }
+        return null;
+    }
+
+    /**
+     * Set route parameters (called by Router when matching routes)
+     */
+    public function setRouteParams(array $params): void
+    {
+        $this->routeParams = $params;
+    }
+
+    /**
+     * Get a route parameter value
+     */
+    public function getRouteParam(string $key, $default = null)
+    {
+        return $this->routeParams[$key] ?? $default;
+    }
+
+    /**
+     * Get all route parameters
+     */
+    public function getRouteParams(): array
+    {
+        return $this->routeParams;
+    }
+
+    /**
+     * Alias for query parameters
+     */
+    public function query(?string $key = null, $default = null)
+    {
+        return $this->get($key, $default);
+    }
+
+    /**
+     * Get request body as array (from JSON or form data)
+     */
+    public function getBody(): ?array
+    {
+        if ($this->jsonBody !== null) {
+            return $this->jsonBody;
+        }
+        if (!empty($this->postParams)) {
+            return $this->postParams;
         }
         return null;
     }

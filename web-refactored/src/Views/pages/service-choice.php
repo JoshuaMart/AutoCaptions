@@ -164,7 +164,6 @@ function selectService(service) {
 
 function continueWithService() {
     if (!selectedService) return;
-    // Change this redirect if needed for your logic
     window.location.href = '/configuration?service=' + selectedService;
 }
 </script>
