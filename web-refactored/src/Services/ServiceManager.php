@@ -129,7 +129,7 @@ class ServiceManager
         $url = $this->buildUrl($config["url"], $healthEndpoint);
         $timeout = $config["timeout"] ?? $this->defaultTimeout; // Effective config should have timeout
 
-        $response = $this->executeRequest("GET", $url, [], [], [], $timeout);
+        $response = $this->executeRequest("GET", $url, $timeout, [], [], []);
 
         if (
             $response["success"] &&
@@ -240,10 +240,10 @@ class ServiceManager
         return $this->executeRequest(
             $method,
             $url,
+            $timeout,
             $data,
             $files,
-            $headers,
-            $timeout
+            $headers
         );
     }
 
@@ -292,10 +292,10 @@ class ServiceManager
     private function executeRequest(
         string $method,
         string $url,
+        int $timeout,
         array $data = [],
         array $files = [],
-        array $customHeaders = [],
-        int $timeout
+        array $customHeaders = []
     ): array {
         $ch = curl_init();
         $method = strtoupper($method);

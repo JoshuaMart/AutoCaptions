@@ -403,18 +403,19 @@ class FFmpegConfig {
     }
 
     generateSelectField(option, defaults) {
-        const defaultValue = defaults[option.key] || (option.options[0]?.value || '');
+        const defaultValue = defaults[option.key] || (Array.isArray(option.options) ? option.options[0] : option.options[0]?.value || '');
         
         return `
             <div class="field-group">
                 <label class="block text-sm font-medium text-gray-700 mb-2">${option.label}</label>
                 <select name="${option.key}" id="${option.key}" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    ${option.options.map(opt => `
-                        <option value="${opt.value}" ${opt.value === defaultValue ? 'selected' : ''}>
-                            ${opt.label}
-                        </option>
-                    `).join('')}
+                    ${option.options.map(opt => {
+                        // Handle both string array ["top", "center", "bottom"] and object array [{value: "top", label: "Top"}]
+                        const value = typeof opt === 'string' ? opt : opt.value;
+                        const label = typeof opt === 'string' ? opt.charAt(0).toUpperCase() + opt.slice(1) : opt.label;
+                        return `<option value="${value}" ${value === defaultValue ? 'selected' : ''}>${label}</option>`;
+                    }).join('')}
                 </select>
             </div>
         `;
@@ -609,16 +610,27 @@ class FFmpegConfig {
             });
 
             if (response.ok) {
-                const blob = await response.blob();
-                const imageUrl = URL.createObjectURL(blob);
+                const contentType = response.headers.get('content-type');
                 
-                const previewImage = document.getElementById('preview-image');
-                if (previewImage) {
-                    previewImage.src = imageUrl;
-                    this.showPreviewState('image');
+                if (contentType && contentType.includes('application/json')) {
+                    // Handle JSON response (error case)
+                    const jsonResponse = await response.json();
+                    if (!jsonResponse.success) {
+                        throw new Error(jsonResponse.error?.message || 'Preview generation failed');
+                    }
+                } else {
+                    // Handle image response (success case)
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const previewImage = document.getElementById('preview-image');
+                    if (previewImage) {
+                        previewImage.src = imageUrl;
+                        this.showPreviewState('image');
+                    }
+                    
+                    this.showNotification('success', 'Preview Generated', 'Preview updated successfully');
                 }
-                
-                this.showNotification('success', 'Preview Generated', 'Preview updated successfully');
             } else {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -661,18 +673,28 @@ class FFmpegConfig {
             });
 
             if (response.ok) {
-                // Trigger file download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'captioned_video.mp4';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    // Handle JSON response (error case)
+                    const jsonResponse = await response.json();
+                    if (!jsonResponse.success) {
+                        throw new Error(jsonResponse.error?.message || 'Video generation failed');
+                    }
+                } else {
+                    // Handle video file response (success case)
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'captioned_video.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
 
-                this.showNotification('success', 'Video Generated', 'Your captioned video has been generated and downloaded!');
+                    this.showNotification('success', 'Video Generated', 'Your captioned video has been generated and downloaded!');
+                }
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);

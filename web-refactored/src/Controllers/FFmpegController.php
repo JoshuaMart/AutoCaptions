@@ -66,13 +66,16 @@ class FFmpegController
                 throw new \Exception('Invalid response from service');
             }
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'SERVICE_ERROR',
                     'message' => 'Failed to load presets: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -84,13 +87,16 @@ class FFmpegController
         $presetName = $request->getRouteParam('preset');
         
         if (!$presetName) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'INVALID_REQUEST',
                     'message' => 'Preset name is required'
                 ]
-            ], 400);
+            ]));
+            $response->send();
             return;
         }
 
@@ -104,13 +110,16 @@ class FFmpegController
                 throw new \Exception('Invalid response from service');
             }
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'SERVICE_ERROR',
                     'message' => 'Failed to load preset details: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -131,13 +140,16 @@ class FFmpegController
                 throw new \Exception('Invalid response from service');
             }
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'SERVICE_ERROR',
                     'message' => 'Failed to load fonts: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -149,13 +161,16 @@ class FFmpegController
         $fontFamily = $request->getRouteParam('family');
         
         if (!$fontFamily) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'INVALID_REQUEST',
                     'message' => 'Font family is required'
                 ]
-            ], 400);
+            ]));
+            $response->send();
             return;
         }
 
@@ -169,13 +184,16 @@ class FFmpegController
                 throw new \Exception('Invalid response from service');
             }
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'SERVICE_ERROR',
                     'message' => 'Failed to load font variants: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -186,12 +204,13 @@ class FFmpegController
     {
         try {
             // Get video file from session
-            $uploadData = $this->app->session->get('upload_data');
+            $uploadData = $this->app->session->get('uploaded_file_info');
+            
             if (!$uploadData) {
                 throw new \Exception('No video file found in session');
             }
 
-            $videoPath = $uploadData['path'];
+            $videoPath = $uploadData['filePath'];
             if (!file_exists($videoPath)) {
                 throw new \Exception('Video file not found');
             }
@@ -208,16 +227,49 @@ class FFmpegController
                 throw new \Exception('No transcription data found');
             }
 
-            // Prepare data for FFmpeg service
+            // Prepare data for FFmpeg service - wrap transcriptionData in expected structure
+            $customStyle = $configData['customStyle'] ?? [];
+            
+            // Fix empty fontFamily - use default if empty
+            if (empty($customStyle['fontFamily'])) {
+                $customStyle['fontFamily'] = 'Inter';
+            }
+            
+            // Convert string numeric values to actual numbers
+            $numericFields = ['fontSize', 'fontWeight', 'outlineWidth', 'activeWordOutlineWidth', 
+                             'activeWordFontSize', 'positionOffset', 'backgroundOpacity', 
+                             'shadowOpacity', 'activeWordShadowOpacity'];
+            
+            foreach ($numericFields as $field) {
+                if (isset($customStyle[$field]) && is_string($customStyle[$field]) && is_numeric($customStyle[$field])) {
+                    $customStyle[$field] = (int)$customStyle[$field];
+                }
+            }
+            
             $data = [
                 'preset' => $configData['preset'] ?? 'custom',
-                'customStyle' => $configData['customStyle'] ?? [],
-                'transcriptionData' => $transcriptionData
+                'customStyle' => $customStyle,
+                'transcriptionData' => [
+                    'success' => true,
+                    'transcription' => $transcriptionData,
+                    'processingTime' => $transcriptionData['processingTime'] ?? null
+                ]
             ];
 
             // Get optional parameters
             $timestamp = $request->query('timestamp');
             $position = $request->query('position', 'middle');
+            
+            // Debug: Check what's in session and request details
+            error_log('FFmpeg Preview Debug: ' . json_encode([
+                'uploaded_file_info' => $uploadData,
+                'transcription_data' => $this->app->session->get('transcription_data'),
+                'video_path' => $videoPath,
+                'video_exists' => file_exists($videoPath),
+                'config_data' => $configData,
+                'query_params' => ['timestamp' => $timestamp, 'position' => $position],
+                'data_to_send' => $data
+            ]));
 
             $params = [];
             if ($timestamp) {
@@ -229,14 +281,33 @@ class FFmpegController
 
             // Call FFmpeg service with file upload
             $files = ['video' => $videoPath];
+            $postData = ['data' => json_encode($data)];
+            
+            error_log('Making request to FFmpeg service: ' . json_encode([
+                'service' => 'ffmpeg-captions',
+                'endpoint' => 'preview',
+                'files' => array_keys($files),
+                'post_data' => $postData,
+                'query_params' => $params
+            ]));
+            
             $result = $this->serviceManager->makeRequest(
                 'ffmpeg-captions',
                 'preview',
                 'POST',
-                ['data' => json_encode($data)],
+                $postData,
                 $files,
                 $params
             );
+            
+            error_log('FFmpeg service response: ' . json_encode([
+                'success' => $result['success'] ?? false,
+                'status_code' => $result['statusCode'] ?? null,
+                'body_type' => gettype($result['body'] ?? null),
+                'body_length' => is_string($result['body'] ?? null) ? strlen($result['body']) : 'not_string',
+                'body_content' => $result['body'] ?? null,
+                'headers' => $result['headers'] ?? []
+            ]));
 
             // Return image directly
             if ($result['success'] && isset($result['body'])) {
@@ -248,13 +319,16 @@ class FFmpegController
             }
 
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'PREVIEW_ERROR',
                     'message' => 'Failed to generate preview: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -265,12 +339,12 @@ class FFmpegController
     {
         try {
             // Get video file from session
-            $uploadData = $this->app->session->get('upload_data');
+            $uploadData = $this->app->session->get('uploaded_file_info');
             if (!$uploadData) {
                 throw new \Exception('No video file found in session');
             }
 
-            $videoPath = $uploadData['path'];
+            $videoPath = $uploadData['filePath'];
             if (!file_exists($videoPath)) {
                 throw new \Exception('Video file not found');
             }
@@ -287,11 +361,33 @@ class FFmpegController
                 throw new \Exception('No transcription data found');
             }
 
-            // Prepare data for FFmpeg service
+            // Prepare data for FFmpeg service - wrap transcriptionData in expected structure
+            $customStyle = $configData['customStyle'] ?? [];
+            
+            // Fix empty fontFamily - use default if empty
+            if (empty($customStyle['fontFamily'])) {
+                $customStyle['fontFamily'] = 'Inter';
+            }
+            
+            // Convert string numeric values to actual numbers
+            $numericFields = ['fontSize', 'fontWeight', 'outlineWidth', 'activeWordOutlineWidth', 
+                             'activeWordFontSize', 'positionOffset', 'backgroundOpacity', 
+                             'shadowOpacity', 'activeWordShadowOpacity'];
+            
+            foreach ($numericFields as $field) {
+                if (isset($customStyle[$field]) && is_string($customStyle[$field]) && is_numeric($customStyle[$field])) {
+                    $customStyle[$field] = (int)$customStyle[$field];
+                }
+            }
+            
             $data = [
                 'preset' => $configData['preset'] ?? 'custom',
-                'customStyle' => $configData['customStyle'] ?? [],
-                'transcriptionData' => $transcriptionData
+                'customStyle' => $customStyle,
+                'transcriptionData' => [
+                    'success' => true,
+                    'transcription' => $transcriptionData,
+                    'processingTime' => $transcriptionData['processingTime'] ?? null
+                ]
             ];
 
             // Call FFmpeg service with file upload
@@ -323,13 +419,16 @@ class FFmpegController
             }
 
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'GENERATION_ERROR',
                     'message' => 'Failed to generate video: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
@@ -354,13 +453,16 @@ class FFmpegController
             ]);
 
         } catch (\Exception $e) {
-            $response->json([
+            $response->setHeader('Content-Type', 'application/json');
+            $response->setStatusCode(200);
+            $response->setContent(json_encode([
                 'success' => false,
                 'error' => [
                     'code' => 'SAVE_ERROR',
                     'message' => 'Failed to save configuration: ' . $e->getMessage()
                 ]
-            ], 500);
+            ]));
+            $response->send();
         }
     }
 
