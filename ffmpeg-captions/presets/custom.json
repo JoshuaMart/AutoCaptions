@@ -21,7 +21,9 @@
     "shadowColor": "000000",
     "shadowOpacity": 0,
     "activeWordShadowColor": "FF6B35",
-    "activeWordShadowOpacity": 80
+    "activeWordShadowOpacity": 80,
+    "maxWordsPerGroup": 5,
+    "maxGroupDuration": 2500
   },
   "customizable": [
     {
@@ -137,6 +139,20 @@
       "label": "Active Word Shadow Opacity (%)",
       "min": 0,
       "max": 100
+    },
+    {
+      "key": "maxWordsPerGroup",
+      "type": "number",
+      "label": "Max Words Per Group",
+      "min": 1,
+      "max": 15
+    },
+    {
+      "key": "maxGroupDuration",
+      "type": "number",
+      "label": "Max Group Duration (ms)",
+      "min": 500,
+      "max": 5000
     }
   ]
 }

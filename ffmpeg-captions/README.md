@@ -183,7 +183,21 @@ Details of a specific preset with customizable parameters.
         "label": "Active Word Shadow Opacity (%)",
         "min": 0,
         "max": 100
-      }
+        },
+    {
+      "key": "maxWordsPerGroup",
+      "type": "number",
+      "label": "Max Words Per Group",
+      "min": 1,
+      "max": 15
+    },
+    {
+      "key": "maxGroupDuration",
+      "type": "number",
+      "label": "Max Group Duration (ms)",
+      "min": 500,
+      "max": 5000
+    }
     ]
   }
 }
@@ -441,6 +455,36 @@ Value in pixels to fine-tune the position:
   "positionOffset": -50
 }
 // → Top position - 50px upward (even higher)
+```
+
+## Word Grouping Control
+
+Allow fine control over how words are grouped in subtitles:
+
+- **`maxWordsPerGroup`**: Maximum words per subtitle group (1-15)
+- **`maxGroupDuration`**: Maximum group duration in milliseconds (500-5000)
+
+**Grouping Logic**: A new group is created when **any** of these limits is reached.
+
+### Examples
+```json
+// Short, dynamic subtitles (TikTok style)
+{
+  "maxWordsPerGroup": 2,
+  "maxGroupDuration": 1000
+}
+
+// Long, readable subtitles (documentary style)
+{
+  "maxWordsPerGroup": 8,
+  "maxGroupDuration": 4000
+}
+
+// Word-by-word highlighting (karaoke style)
+{
+  "maxWordsPerGroup": 1,
+  "maxGroupDuration": 5000
+}
 ```
 
 ## Customizable Parameter Types
