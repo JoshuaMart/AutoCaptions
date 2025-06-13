@@ -640,6 +640,9 @@ class FFmpegConfig {
         } else if (option.type === "color") {
           // For color fields, read the hex input value (without #)
           config.customStyle[option.key] = element.value.replace("#", "");
+        } else if (option.type === "number") {
+          // Convert numeric values to numbers
+          config.customStyle[option.key] = parseFloat(element.value) || 0;
         } else {
           config.customStyle[option.key] = element.value;
         }

@@ -238,7 +238,8 @@ class FFmpegController
             // Convert string numeric values to actual numbers
             $numericFields = ['fontSize', 'fontWeight', 'outlineWidth', 'activeWordOutlineWidth', 
                              'activeWordFontSize', 'positionOffset', 'backgroundOpacity', 
-                             'shadowOpacity', 'activeWordShadowOpacity'];
+                             'shadowOpacity', 'activeWordShadowOpacity', 'maxWordsPerGroup', 
+                             'maxGroupDuration'];
             
             foreach ($numericFields as $field) {
                 if (isset($customStyle[$field]) && is_string($customStyle[$field]) && is_numeric($customStyle[$field])) {
@@ -372,7 +373,8 @@ class FFmpegController
             // Convert string numeric values to actual numbers
             $numericFields = ['fontSize', 'fontWeight', 'outlineWidth', 'activeWordOutlineWidth', 
                              'activeWordFontSize', 'positionOffset', 'backgroundOpacity', 
-                             'shadowOpacity', 'activeWordShadowOpacity'];
+                             'shadowOpacity', 'activeWordShadowOpacity', 'maxWordsPerGroup', 
+                             'maxGroupDuration'];
             
             foreach ($numericFields as $field) {
                 if (isset($customStyle[$field]) && is_string($customStyle[$field]) && is_numeric($customStyle[$field])) {
