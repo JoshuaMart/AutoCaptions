@@ -1,0 +1,36 @@
+name: Build Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [transcriptions, ffmpeg-captions, remotion-captions]
+      fail-fast: false # Continue testing other services even if one fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "${{ matrix.service }}/package-lock.json"
+
+      - name: Install dependencies - ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: npm i
+
+      - name: Build - ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: npm run build
+        continue-on-error: false
