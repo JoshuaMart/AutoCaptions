@@ -32,16 +32,16 @@ RUN apt-get update && apt-get install -y gnupg wget && \
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
-COPY remotion/package.json remotion/tsconfig.json remotion/remotion.config.ts ./remotion/
+COPY package*.json ./
+COPY remotion/package*.json remotion/tsconfig.json remotion/remotion.config.ts ./remotion/
 COPY remotion/src ./remotion/src
 
 # Install dependencies
-RUN npm i
+RUN npm ci
 
 # Install Remotion dependencies et Chrome
 RUN cd remotion && \
-    npm i && \
+    npm ci && \
     npx remotion browser ensure && \
     cd ..
 
