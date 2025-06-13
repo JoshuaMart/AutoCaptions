@@ -111,7 +111,7 @@ function createStyledWord(
 }
 
 /**
- * Group words into display units
+ * Group words into display units based on count and duration limits
  */
 function createWordGroups(
   captions: Caption[],
@@ -130,12 +130,10 @@ function createWordGroups(
       groupStartTime = caption.startMs;
     } else {
       const groupDuration = (caption.endMs || caption.startMs + 300) - groupStartTime;
-      const timeSinceLast = caption.startMs - (captions[i - 1].endMs || captions[i - 1].startMs + 300);
       
       if (
         currentGroup.length >= maxWordsPerGroup ||
-        groupDuration >= maxGroupDuration ||
-        timeSinceLast > 600
+        groupDuration >= maxGroupDuration
       ) {
         groups.push([...currentGroup]);
         currentGroup = [caption];
@@ -257,8 +255,12 @@ Style: Default,${style.fontFamily},${adjustedFontSize},&H${textColorBGR}&,&H0&,&
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
-    // Create word groups
-    const wordGroups = createWordGroups(captions);
+    // Create word groups using style parameters
+    const wordGroups = createWordGroups(
+      captions,
+      style.maxGroupDuration,
+      style.maxWordsPerGroup
+    );
 
     // Generate all dialogue entries
     const allDialogues: DialogueEntry[] = [];

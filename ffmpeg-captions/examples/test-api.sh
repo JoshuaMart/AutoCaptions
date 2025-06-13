@@ -51,7 +51,8 @@ if [ -f "$VIDEO_FILE" ]; then
             "shadowColor": "000000",
             "shadowOpacity": 0,
             "activeWordShadowColor": "FF6B35",
-            "activeWordShadowOpacity": 0
+            "activeWordShadowOpacity": 0,
+            "maxGroupDuration": 1200
         },
         "transcriptionData": {
             "success": true,

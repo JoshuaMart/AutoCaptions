@@ -40,6 +40,9 @@ export interface CaptionStyle {
   shadowOpacity: number; // 0-100
   activeWordShadowColor: string; // hex without #
   activeWordShadowOpacity: number; // 0-100
+  // Word grouping parameters
+  maxWordsPerGroup: number; // maximum number of words per subtitle group
+  maxGroupDuration: number; // maximum duration of a group in milliseconds
 }
 
 export interface CustomizableParam {
