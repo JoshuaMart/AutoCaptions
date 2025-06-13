@@ -1,7 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
-remotion/package-lock.json
 
 # Build output
 dist/
