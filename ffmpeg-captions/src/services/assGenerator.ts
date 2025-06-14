@@ -110,45 +110,210 @@ function createStyledWord(
   }
 }
 
+// ===== SMART LINGUISTIC GROUPING FUNCTIONS =====
+
 /**
- * Group words into display units based on count and duration limits
+ * Detects if a word ends with an apostrophe (contraction start)
  */
-function createWordGroups(
+function isContractionStart(text: string): boolean {
+  return /[\w]+['']$/.test(text.trim());
+}
+
+/**
+ * Detects if a word starts with a lowercase letter (contraction end)
+ */
+function isContractionEnd(text: string): boolean {
+  return /^[a-z]+/.test(text.trim());
+}
+
+/**
+ * Detects if a word contains a hyphen (compound word)
+ */
+function isHyphenatedWord(text: string): boolean {
+  return /\w+-\w+/.test(text.trim());
+}
+
+/**
+ * Detects if a word ends a sentence (contains period, exclamation, etc.)
+ */
+function isSentenceEnd(text: string): boolean {
+  return /[.!?]/.test(text.trim());
+}
+
+/**
+ * Detects if a word is punctuation only (no letters)
+ */
+function isPunctuationOnly(text: string): boolean {
+  return /^[.!?,:;]+$/.test(text.trim());
+}
+
+/**
+ * Calculate the "weight" of a word for grouping purposes
+ */
+function getWordWeight(caption: Caption): number {
+  const text = caption.text.trim();
+  
+  // Contraction parts (like "I'" or "m") count as 0.5 words
+  if (isContractionStart(text) || isContractionEnd(text)) {
+    return 0.5;
+  }
+  
+  // Hyphenated compound words count as 1 word
+  if (isHyphenatedWord(text)) {
+    return 1;
+  }
+  
+  // Regular words
+  return 1;
+}
+
+/**
+ * Merge separated contractions (I' + m = I'm)
+ */
+function mergeContractions(captions: Caption[]): Caption[] {
+  const mergedCaptions: Caption[] = [];
+  
+  for (let i = 0; i < captions.length; i++) {
+    const current = captions[i];
+    const next = captions[i + 1];
+    
+    // If current word ends with apostrophe and next starts with lowercase
+    if (next && isContractionStart(current.text) && isContractionEnd(next.text)) {
+      // Merge the two words
+      const mergedCaption: Caption = {
+        text: current.text + next.text,
+        startMs: current.startMs,
+        endMs: next.endMs || next.startMs + 300,
+        confidence: Math.min(current.confidence || 1, next.confidence || 1)
+      };
+      
+      mergedCaptions.push(mergedCaption);
+      i++; // Skip next word as it was merged
+      
+      logger.info(`Contraction merged: "${current.text}" + "${next.text}" = "${mergedCaption.text}"`);
+    } else {
+      mergedCaptions.push(current);
+    }
+  }
+  
+  return mergedCaptions;
+}
+
+/**
+ * Smart word grouping with linguistic rules - CORRECTED VERSION
+ */
+function createSmartWordGroups(
   captions: Caption[],
   maxGroupDuration: number = 2500,
   maxWordsPerGroup: number = 5,
 ): Caption[][] {
+  // Step 1: Merge contractions
+  const processedCaptions = mergeContractions(captions);
+  
+  logger.info(`Smart grouping: ${captions.length} original words -> ${processedCaptions.length} words after merging`);
+  
   const groups: Caption[][] = [];
   let currentGroup: Caption[] = [];
+  let currentGroupWeight = 0;
   let groupStartTime = 0;
 
-  for (let i = 0; i < captions.length; i++) {
-    const caption = captions[i];
+  for (let i = 0; i < processedCaptions.length; i++) {
+    const caption = processedCaptions[i];
+    const wordWeight = getWordWeight(caption);
     
     if (currentGroup.length === 0) {
+      // First word of the group
       currentGroup.push(caption);
+      currentGroupWeight = wordWeight;
       groupStartTime = caption.startMs;
     } else {
+      // Calculate duration if we add this word
       const groupDuration = (caption.endMs || caption.startMs + 300) - groupStartTime;
+      const projectedWeight = currentGroupWeight + wordWeight;
       
-      if (
-        currentGroup.length >= maxWordsPerGroup ||
-        groupDuration >= maxGroupDuration
-      ) {
+      // Check if we exceed limits (WITHOUT considering sentence endings)
+      const exceedsLimits = (
+        projectedWeight > maxWordsPerGroup ||
+        groupDuration > maxGroupDuration
+      );
+      
+      if (exceedsLimits) {
+        // End current group and start new one
         groups.push([...currentGroup]);
         currentGroup = [caption];
+        currentGroupWeight = wordWeight;
         groupStartTime = caption.startMs;
       } else {
+        // Add to current group
         currentGroup.push(caption);
+        currentGroupWeight += wordWeight;
       }
+    }
+    
+    // AFTER adding the word, check if it ends a sentence
+    if (isSentenceEnd(caption.text)) {
+      // Force end of group after this word
+      groups.push([...currentGroup]);
+      logger.info(`Group ended by sentence terminator: "${caption.text}"`);
+      
+      // Reset for next group
+      currentGroup = [];
+      currentGroupWeight = 0;
+      groupStartTime = 0;
     }
   }
 
+  // Add final group if not empty
   if (currentGroup.length > 0) {
     groups.push(currentGroup);
   }
 
-  return groups;
+  logger.info(`Initial grouping completed: ${groups.length} groups created`);
+
+  // Step 2: Post-process to merge singleton punctuation groups
+  const finalGroups = mergePunctuationGroups(groups);
+  
+  logger.info(`After punctuation merging: ${finalGroups.length} final groups`);
+  
+  // Log final statistics
+  finalGroups.forEach((group, idx) => {
+    const totalWeight = group.reduce((sum, caption) => sum + getWordWeight(caption), 0);
+    const duration = (group[group.length - 1].endMs || group[group.length - 1].startMs + 300) - group[0].startMs;
+    const text = group.map(c => c.text).join(' ');
+    logger.info(`Final group ${idx + 1}: "${text}" (${totalWeight} words, ${duration}ms)`);
+  });
+
+  return finalGroups;
+}
+
+/**
+ * Merge singleton punctuation groups with previous group
+ */
+function mergePunctuationGroups(groups: Caption[][]): Caption[][] {
+  if (groups.length <= 1) return groups;
+  
+  const mergedGroups: Caption[][] = [];
+  
+  for (let i = 0; i < groups.length; i++) {
+    const currentGroup = groups[i];
+    
+    // If it's a single-word group with sentence ending and there's a previous group
+    if (currentGroup.length === 1 && 
+        isSentenceEnd(currentGroup[0].text) && 
+        mergedGroups.length > 0) {
+      
+      // Merge with previous group
+      const previousGroup = mergedGroups[mergedGroups.length - 1];
+      previousGroup.push(...currentGroup);
+      
+      logger.info(`Punctuation group merged: "${currentGroup[0].text}" added to previous group`);
+    } else {
+      // Add group as is
+      mergedGroups.push([...currentGroup]);
+    }
+  }
+  
+  return mergedGroups;
 }
 
 /**
@@ -210,7 +375,7 @@ function generateGroupDialogues(
 }
 
 /**
- * Main ASS generation function
+ * Main ASS generation function with smart linguistic grouping
  */
 export function generateASS(
   captions: Caption[],
@@ -255,8 +420,8 @@ Style: Default,${style.fontFamily},${adjustedFontSize},&H${textColorBGR}&,&H0&,&
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
-    // Create word groups using style parameters
-    const wordGroups = createWordGroups(
+    // Use smart linguistic grouping
+    const wordGroups = createSmartWordGroups(
       captions,
       style.maxGroupDuration,
       style.maxWordsPerGroup
@@ -305,6 +470,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       ass += `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${dialogue.text}\n`;
       dialogueCount++;
     }
+    
+    logger.info(`ASS generated with ${dialogueCount} dialogues and ${wordGroups.length} smart linguistic groups`);
     
     return ass;
   } catch (error) {
